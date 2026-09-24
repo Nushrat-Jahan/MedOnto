@@ -1,0 +1,425 @@
+---
+title: "De données de santé structurées à une ontologie : pipeline assisté par LLM"
+subtitle: "Suivi de stage — Olti Mjeku"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    theme: flatly
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+knitr::opts_knit$set(root.dir = normalizePath(".."))  # chemins relatifs à la racine du projet
+library(jsonlite)
+library(knitr)
+```
+
+# Introduction
+
+Ce document suit mon travail de stage **semaine par semaine**. Chaque semaine est accessible depuis la table des matières. L'objectif est double : suivre mon avancement, et laisser plus tard, à moi comme aux autres, une trace claire de ce qui a été fait, comment et pourquoi.
+
+**Direction générale du stage :**
+
+> Données de santé structurées → alignement ontologique → RML assisté par LLM → RDF
+
+**Cadre commun aux trois stagiaires :**
+
+| Élément | Choix |
+|---|---|
+| LLM | Qwen2.5-7B-Instruct |
+| Exécution | En local via Ollama |
+| Terminologie de référence | SNOMED CT |
+| Format de sortie | JSON structuré / tableau |
+| Validation | Vérification manuelle de chaque résultat par rapport aux données d'origine |
+
+Ma partie porte sur les **données structurées de cohorte**, c'est-à-dire des colonnes d'un fichier CSV, et non du texte libre.
+
+---
+
+# Semaine 1 — Des variables CSV aux concepts ontologiques
+
+## 1. La tâche confiée
+
+Pour 5 à 10 variables médicalement pertinentes d'un jeu de données de cohorte :
+
+1. Relever le **nom**, le **type**, un **exemple de valeur** et l'**unité ou la description** de chaque variable.
+2. Demander à **Qwen** de proposer un **concept normalisé**, une **catégorie sémantique** et, si pertinent, **une relation**.
+3. **Vérifier** ces propositions dans **SNOMED CT**.
+4. Construire un **petit fragment d'ontologie** (Turtle/OWL) à partir des concepts validés.
+5. **Valider** chaque résultat en le comparant à la variable et à ses métadonnées : *Correct / Incorrect / Uncertain*.
+
+**Pipeline attendu :** `variable CSV → Qwen → SNOMED CT → fragment d'ontologie → validation`
+
+**Livrables :** un script, une table/un JSON de mapping pour 5 à 10 variables, un fragment Turtle/OWL et des notes de validation.
+
+Pour chaque concept extrait, les champs à enregistrer sont :
+
+| Champ | Contenu |
+|---|---|
+| Source | Variable d'origine |
+| Concept | Concept normalisé proposé par Qwen |
+| Category | Symptôme, maladie, traitement, biomarqueur, évaluation… |
+| Relation | Une relation, si elle est justifiée |
+| Evidence | Information source qui justifie le résultat |
+| SNOMED CT match | Libellé préféré et identifiant, si trouvés |
+| Status | Concept existant / *candidate project concept* |
+| Validation | Correct / Incorrect / Uncertain |
+
+> Cette tâche a été modifiée en cours de route (voir la section *Nouvelle tâche*). Je ne me limite plus à SNOMED CT : si un concept n'y figure pas, je cherche dans une autre ontologie biomédicale.
+
+## 2. Le jeu de données
+
+Le jeu de données (Mendeley) étudie le lien entre la **polyarthrite rhumatoïde (PR)** et le **Body Roundness Index (BRI)**. Il porte sur **13 273 adultes** de l'étude américaine **NHANES (2011–2020)**.
+
+Il croise le diagnostic de cette maladie auto-immune avec le BRI, un indice qui décrit la répartition des graisses corporelles. Il contient aussi de nombreuses variables d'ajustement : données démographiques, mode de vie, antécédents médicaux et alimentation. L'objectif des auteurs est de comprendre comment la répartition des graisses influence le risque de PR, pour orienter la prévention et le traitement.
+
+Deux fichiers sont fournis :
+
+- `The primary data of this research..csv` : les variables NHANES brutes, avec des codes comme `MCQ160A`, `RIDAGEYR` ou `BPQ020` ;
+- `The final data after screening.csv` : les données nettoyées, avec des colonnes lisibles (`RheumatoidArthritis`, `Age`, `Hypertension`…). **C'est celui que j'utilise.**
+
+J'ai rédigé la documentation complète de la base sur Notion :
+[Documentation de la base de données](https://app.notion.com/p/Documentation-de-la-base-de-donn-es-1e323dbcbaef4e3f93fbca06b9e89b5d?source=copy_link)
+
+```{r apercu-csv, results="asis"}
+csv_path <- "data/The final data after screening.csv"   # non versionné : à placer localement dans data/
+if (file.exists(csv_path)) {
+  csv <- read.csv2(csv_path, nrows = 5, check.names = FALSE)
+  print(kable(csv[, c("SEQN", "RheumatoidArthritis", "BRI", "Age", "SmokingStatus", "BMI",
+                      "DrinkingStatus", "Hypertension", "Diabetes", "Hyperlipidemia", "PhysicalActivity")],
+              caption = "Aperçu des 5 premières lignes (colonnes retenues + identifiant SEQN)"))
+} else {
+  cat("*Aperçu indisponible : placer `The final data after screening.csv` dans `data/` pour l'afficher.*")
+}
+```
+
+## 3. L'article de référence
+
+Nushrat m'a demandé de lire les sections 3 à 3.3 de *Clinical Trials Ontology Engineering with Large Language Models* (Berkan Çakır et al., CEUR-WS vol. 3718, [lien](https://ceur-ws.org/Vol-3718/paper6.pdf)).
+
+Les auteurs utilisent des LLM pour lire automatiquement les résultats de **50 essais cliniques sur le diabète**. Pour guider le modèle, ils découpent le travail en étapes :
+
+1. le LLM joue d'abord le rôle d'un **expert du domaine** et repère les informations médicales importantes ;
+2. il joue ensuite le rôle d'un **ingénieur ontologue** et transforme ces informations en contenu d'ontologie.
+
+Le but est de ranger et relier automatiquement les connaissances de ces études dans une **ontologie unique**, ce qui fait gagner beaucoup de temps aux chercheurs.
+
+Ce que j'en retiens pour ma tâche, c'est la procédure de base :
+
+> données d'essais cliniques → extraction de concepts par un LLM → construction de contenu ontologique
+
+J'ai repris dans mon prompt leur structure *rôle → contexte → objectif → format de sortie contrôlé*.
+
+## 4. C'est quoi une ontologie ?
+
+Avec mes mots : une ontologie est une **carte mentale formelle** d'un domaine, ici la médecine. Au lieu de stocker du texte en vrac, elle définit des **concepts** et les **relations logiques** entre eux, d'une manière qu'un ordinateur peut exploiter. Par exemple :
+
+- la *polyarthrite rhumatoïde* **est une** *maladie auto-immune* ;
+- la *polyarthrite rhumatoïde* **est traitée par** le *méthotrexate* ;
+- la *polyarthrite rhumatoïde* **a pour symptôme** la *fatigue*.
+
+Chaque concept a un **identifiant unique (URI)**. Deux bases de données différentes peuvent ainsi dire « je parle exactement de la même chose » : par exemple, SNOMED CT `69896004` désigne toujours la polyarthrite rhumatoïde.
+
+**À quoi ça sert ?** À transformer un vocabulaire médical complexe et hétérogène en une base de connaissances bien rangée, interrogeable et interopérable.
+
+**Et dans ma partie du projet ?** Mes données sont déjà **structurées** (un CSV). L'enjeu n'est pas de nettoyer du texte, mais de :
+
+1. **relier chaque colonne** du CSV au bon concept d'une ontologie de référence (alignement) ;
+2. **transformer les données** du CSV en RDF conforme à ces concepts, avec un LLM qui aide à écrire les règles de transformation (RML).
+
+La question de fond : **à quel point peut-on faire confiance au LLM, et combien de corrections humaines faut-il ?**
+
+**Limites.** Un LLM est une boîte noire. Même avec un prompt identique, on ne peut pas expliquer avec certitude *pourquoi* il a produit telle réponse : un mot ou une ponctuation peut changer le résultat. On peut en revanche :
+
+- rendre les sorties **reproductibles** (température à 0 et prompt identifié par un ID) ;
+- **comparer** des variantes de prompt et observer des différences notables (section 7) ;
+- **vérifier systématiquement** chaque sortie, car le modèle peut inventer des concepts ou des codes.
+
+## 5. Les 10 variables retenues
+
+J'ai choisi des variables qui jouent des **rôles différents** :
+
+- les **deux variables centrales** de l'étude : `RheumatoidArthritis` et `BRI` ;
+- des variables **démographiques** : `Age` ;
+- des **facteurs de mode de vie** qui peuvent influer sur les maladies : `SmokingStatus`, `DrinkingStatus`, `PhysicalActivity` ;
+- une **mesure corporelle** : `BMI` ;
+- des **comorbidités** : `Hypertension`, `Diabetes`, `Hyperlipidemia`.
+
+Voici comment elles sont décrites dans le prompt (version à description longue) :
+
+```python
+{"name": "RheumatoidArthritis", "type": "binary numeric", "example": "0 / 1",
+ "description": "Rheumatoid arthritis is a type of arthritis where your immune system attacks the tissue lining the joints ..."},
+{"name": "BRI", "type": "continuous numeric", "example": "4.82",
+ "description": "body roundness index (BRI) – may be more effective at measuring a person's health ... unitless"},
+{"name": "Age", "type": "integer", "example": "22", "description": "age in years"},
+{"name": "SmokingStatus", "type": "categorical text", "example": "Former",
+ "description": "a standard classification that describes a person's current and past habits regarding tobacco use"},
+{"name": "BMI", "type": "continuous numeric", "example": "27.4",
+ "description": "Body mass index (BMI) is a tool that uses your height and weight to estimate your body fat ... in kg/m2"},
+{"name": "DrinkingStatus", "type": "ordinal categorical text", "example": "Occasional drinker",
+ "description": "is a standardized clinical term used to document a patient's current and historical patterns of alcohol consumption."},
+{"name": "Hypertension", "type": "binary categorical text", "example": "Normal",
+ "description": "Blood pressure is the force of blood pushing against the walls of your arteries ... HTN means this pressure is consistently too high."},
+{"name": "Diabetes", "type": "categorical text", "example": "Prediabetes",
+ "description": "a chronic condition that causes your blood sugar (glucose) levels to become too high"},
+{"name": "Hyperlipidemia", "type": "binary categorical text", "example": "Normal",
+ "description": "Hyperlipidemia (high cholesterol) means you have too many lipids (fats) in your blood ..."},
+{"name": "PhysicalActivity", "type": "ordinal categorical text", "example": "Moderate activity",
+ "description": "any bodily movement produced by skeletal muscles that requires energy expenditure"},
+```
+
+## 6. Les deux prompts et le script Python
+
+### Deux prompts, une seule différence
+
+Les deux prompts sont **en anglais**, car les grandes ontologies biomédicales de référence (SNOMED CT, NCIT, LOINC…) sont rédigées et renseignées en anglais.
+
+Ils ont exactement la même structure :
+
+- un **rôle** (*« You are a medical ontology assistant »*) ;
+- un **contexte** (la liste des variables) ;
+- un **objectif** (concept normalisé, catégorie sémantique, relation) ;
+- un **contrôle de la sortie** (*« Answer strictly as a JSON array… »*).
+
+**Seule la description des variables change :**
+
+| | Prompt « description longue » | Prompt « description courte » |
+|---|---|---|
+| Style | Définition médicale riche | Description **de la donnée** telle qu'elle est codée dans la base |
+| `RheumatoidArthritis` | *« Rheumatoid arthritis is a type of arthritis where your immune system attacks… »* | *« presence of rheumatoid arthritis (0 = absence, 1 = presence) »* |
+| `BRI` | *« body roundness index (BRI) – may be more effective at measuring… »* | *« Body Roundness Index, unitless »* |
+| `Hypertension` | *« Blood pressure is the force of blood pushing… »* | *« Normal / Hypertension »* |
+
+### Fonctionnement du script `src/task1.py`
+
+```text
+  Liste des 10 variables (nom, type, exemple, description)
+                 │  build_prompt()
+                 ▼
+  Prompt final (rôle + contexte + objectif + format JSON imposé)
+                 │  prompt_id() : empreinte SHA-1 du texte du prompt → ID de 8 caractères
+                 │               (même prompt ⇒ même ID)
+                 ▼
+  Qwen2.5:7b en local via Ollama   (temperature = 0 → réponses reproductibles)
+                 │  ask_qwen()
+                 ▼
+  Réponse brute : du texte, souvent entouré de balises Markdown ```json … ```
+                 │  parse_json() : extrait uniquement le tableau [ … ] et le lit en JSON
+                 ▼
+  save() : ajoute automatiquement "evidence" (type | exemple | description)
+           + crée les champs de validation vides
+                 │
+                 ▼
+  outputs/qwen_resultats_<date>_<ID>.json
+                 │
+                 ▼
+  Complétion MANUELLE : source_ontology, preferred_label, identifier_uri, match, validation_status
+```
+
+Chaque fichier JSON contient **en en-tête le prompt exact** qui l'a produit, puis un objet par variable :
+
+- **produit par Qwen** : `normalized_concept`, `semantic_category`, `relation` ;
+- **ajouté automatiquement par le script** : `evidence`, c'est-à-dire les informations que nous avons données au modèle pour cette variable ;
+- **rempli à la main** après recherche dans les ontologies : `source_ontology`, `preferred_label`, `identifier_uri`, `match`, `validation_status`.
+
+### Choix de l'ontologie de référence
+
+La consigne a évolué : **SNOMED CT reste la référence**, mais si le concept n'y existe pas ou ne convient pas, je cherche dans une autre ontologie biomédicale (NCIT, LOINC…). Entre plusieurs candidates, Nushrat Jahan m'a conseillé de privilégier celle qui a été **mise à jour le plus récemment**.
+
+## 7. Résultats
+
+### Sortie JSON (extrait)
+
+Extrait du fichier de référence (description longue), pour 4 des 10 variables :
+
+```{r json-long, comment=""}
+long  <- fromJSON("outputs/qwen_resultats_2026-09-23_18caaa28.json")$results
+court <- fromJSON("outputs/qwen_resultats_2026-09-22_42a23b83.json")$results
+cols <- c("variable", "normalized_concept", "semantic_category", "relation", "evidence",
+          "source_ontology", "preferred_label", "identifier_uri", "match", "status", "validation_status")
+show <- c("RheumatoidArthritis", "BRI", "Diabetes", "Hypertension")
+toJSON(long[long$variable %in% show, cols], pretty = TRUE, auto_unbox = TRUE)
+```
+
+Les mêmes variables avec la description courte :
+
+```{r json-court, comment=""}
+toJSON(court[court$variable %in% c("PR", show), cols], pretty = TRUE, auto_unbox = TRUE)
+```
+
+### Ce que je remarque dans ces sorties
+
+Les propositions de Qwen sont globalement cohérentes, mais en les lisant de près, plusieurs questions se posent :
+
+- **« Diabetes = Disease » : mais la colonne n'est pas la maladie.** Qwen classe `Diabetes` en *Disease* et propose `hasDiseaseStatus`. Or la colonne contient `Normal / Prediabetes / Diabetes` : c'est un **statut** du patient vis-à-vis du diabète, et seule la valeur `Diabetes` correspond à la maladie. *Prediabetes* n'est d'ailleurs pas une maladie au sens strict. La même question se pose pour `Hypertension` (*Normal / Hypertension*), `Hyperlipidemia` (*Normal / Hyperlipidemia*) et `RheumatoidArthritis` (*0 / 1*).
+- **Conséquence pour la suite** : l'alignement relie la **variable** au concept de la maladie. En RML, il faudra relier la **valeur** (« Diabetes », « 1 »…) au concept, et décider quoi produire pour « Normal » ou « 0 ».
+- **« BMI / BRI = Biomarker »** : c'est discutable. Un biomarqueur est plutôt une mesure biologique (prise de sang…). BMI et BRI sont des **mesures anthropométriques**, calculées à partir de la taille, du poids ou du tour de taille. *Assessment* serait plus juste.
+- **Des relations sans URI** : `hasDiseaseStatus`, `hasBiomarkerValue`, `hasLifestyleFactor` sont inventées par Qwen et n'existent dans aucune ontologie de référence. Elles décrivent bien l'idée, mais il faudra choisir ou créer de vraies propriétés pour le RML.
+- **L'influence du prompt** : avec la description courte, Qwen produit `DiabetesStatus`, `HypertensionStatus`, `RheumatoidArthritisPresence`… Ces noms sont **plus fidèles à la nature réelle de la variable**. La description longue, très médicale, le pousse vers le **nom de la maladie**. En revanche, la catégorie (*Disease*) reste la même dans les deux cas.
+- **Source mal nommée** : avec la description courte, Qwen a renommé `RheumatoidArthritis` en `PR`, ce qui ne correspond plus au nom de la colonne du CSV. En RML, le nom exact de la colonne source est indispensable.
+- **Evidence** : les descriptions longues viennent de sources de vulgarisation médicale, pas des métadonnées du jeu de données. La description courte est plus proche de ce que la consigne appelle *evidence* (l'information source).
+
+### Comparaison des deux prompts (10 variables)
+
+```{r comparaison}
+court$variable[court$variable == "PR"] <- "RheumatoidArthritis"   # Qwen avait renommé la colonne en "PR"
+comp <- merge(
+  long[,  c("variable", "normalized_concept", "semantic_category", "relation")],
+  court[, c("variable", "normalized_concept", "semantic_category", "relation")],
+  by = "variable", suffixes = c(" (long)", " (court)"), sort = FALSE
+)
+kable(comp, caption = "Propositions de Qwen selon la description fournie")
+```
+
+### Alignement ontologique (fichier de référence)
+
+L'alignement a été vérifié manuellement sur BioPortal.
+
+```{r alignement}
+al <- long[, c("variable", "source_ontology", "preferred_label", "identifier_uri", "match", "status", "validation_status")]
+al$source_ontology[al$source_ontology == ""] <- "—"
+kable(al, caption = "Alignement des 10 variables (outputs/qwen_resultats_2026-09-23_18caaa28.json)")
+```
+
+### Signification des champs de validation
+
+**`match`** : degré de correspondance entre **notre concept** et le **concept trouvé** dans l'ontologie externe.
+
+| Valeur | Signification | Exemple |
+|---|---|---|
+| **Exact** | Les deux désignent exactement la même chose | `Age` ↔ SNOMED *Age* |
+| **Broader** | Le concept externe est **plus général** que le nôtre | « Diabète de type 2 » ↔ *Diabetes mellitus* |
+| **Narrower** | Le concept externe est **plus spécifique** que le nôtre | « Diabète » ↔ *Type 2 diabetes mellitus* |
+| **No Match** | Aucun concept existant ne convient | `BRI` |
+
+**`validation_status`** : est-ce que la **proposition de Qwen** (concept, catégorie, relation) est juste par rapport à la variable et à ses métadonnées ?
+
+| Valeur | Signification |
+|---|---|
+| **Correct** | La proposition correspond bien à la variable |
+| **Incorrect** | La proposition est fausse ou trompeuse |
+| **Uncertain** | Discutable, ou impossible à trancher avec les informations disponibles |
+
+**`Candidate Project Concept`** : ce n'est **pas** une valeur de validation, mais un **statut** du concept (champ *Status* de la consigne : *Existing concept* / *Candidate project concept*). Quand aucune ontologie existante ne convient (`match = No Match`), le concept doit être **créé dans l'ontologie du projet**. C'est le cas de `BRI`.
+
+Ces trois champs sont **indépendants**. Par exemple, `BRI` est `validation_status = Correct` (Qwen l'a bien identifié), `match = No Match` (absent des ontologies consultées) et `Status = Candidate Project Concept`.
+
+## 8. Le fragment d'ontologie (`build_ontology.py`)
+
+Le script `src/build_ontology.py` génère un fragment Turtle (`outputs/ontologie_fragment_*.ttl`) à partir des lignes validées *Correct*. Il traduit aussi le champ `match` en relations SKOS : `skos:exactMatch`, `skos:broadMatch`, `skos:narrowMatch`.
+
+**Je préfère ne pas encore présenter ce fragment en détail.** Je me suis beaucoup aidé d'un agent pour écrire ce code, et je ne maîtrise pas encore assez RDF et Turtle pour garantir que la sortie est correcte. Je le reprendrai après m'être formé à ces notions (voir semaine 2).
+
+Avec la nouvelle tâche, ce script perd de son importance : le RDF ne sera plus écrit « à la main » en Python, il sera **généré depuis le CSV par un mapping RML**. Deux éléments restent utiles :
+
+- la **table d'alignement validée** (le JSON), qui est l'entrée de l'étape suivante ;
+- les **URIs du projet** (`proj:...`) pour les *candidate project concepts* comme BRI.
+
+---
+
+# Semaine 2 — Alignement ontologique et génération RDF par RML
+
+## 1. La nouvelle tâche (résumé)
+
+**Objectif :** passer des concepts déjà extraits à l'**alignement ontologique**, puis à la **génération de RDF avec RML**.
+
+**Étape A — Finaliser l'alignement des variables sélectionnées.** Vérifier chaque concept dans SNOMED CT ou une autre ontologie biomédicale adaptée, et noter pour chaque variable :
+
+| Champ | Contenu |
+|---|---|
+| Concept / propriété validé(e) | Ce que représente réellement la variable |
+| Preferred label | Libellé officiel dans l'ontologie |
+| Identifier / URI | Identifiant du concept |
+| Match | Exact / Broader / Narrower / No Match |
+| *(si rien ne convient)* | **Candidate Project Concept** |
+
+**Étape B — Mapping RML pour 1 ou 2 variables.** Faire générer par Qwen un mapping RML du CSV vers la représentation ontologique validée, avec ce prompt :
+
+> *Given the following CSV field and validated ontology concept/property, generate an RML mapping. Use only the supplied source field and ontology URI. Do not invent source columns or ontology terms. Preserve the datatype where relevant. Return valid Turtle/RML.*
+
+**Étape C — Exécuter et vérifier.** Exécuter le mapping pour produire un petit résultat RDF/Turtle, puis contrôler :
+
+- le bon **champ source** ;
+- la bonne **URI ontologique** ;
+- le bon **type de donnée et la bonne valeur** ;
+- les **erreurs introduites par Qwen** ;
+- les **corrections manuelles** nécessaires.
+
+**Pour lundi :** un exemple complet `variable CSV → alignement → RML → RDF → validation`, ainsi que les alignements des autres variables.
+
+**Pour la suite du stage :** étendre le pipeline à plus de variables et étudier :
+
+- les différents types de variables et les valeurs codées ;
+- la qualité des mappings générés par Qwen ;
+- la comparaison entre mapping manuel et mapping généré par le LLM ;
+- les erreurs de syntaxe et de sens dans le RML ;
+- la justesse du RDF produit ;
+- la quantité de corrections humaines nécessaires.
+
+## 2. Les notions à maîtriser
+
+| Terme | En bref |
+|---|---|
+| **RDF** | Modèle de données du web sémantique : tout est un **triplet** *sujet – prédicat – objet*. Ex. : *patient 62161 – a pour âge – 22*. |
+| **Turtle (.ttl)** | Syntaxe texte lisible pour écrire du RDF, avec des préfixes (`snomed:`, `xsd:`…). |
+| **URI / IRI** | Identifiant web unique d'une ressource, par ex. `http://snomed.info/id/69896004`. |
+| **Concept vs propriété** | Un **concept** (classe) désigne une chose (*Hypertension*) ; une **propriété** relie deux choses (*a pour diagnostic*). SNOMED fournit surtout des concepts, alors qu'un mapping RML a besoin de **propriétés** comme prédicats. |
+| **Alignement ontologique** | Relier nos concepts à ceux d'une ontologie de référence, avec un degré de correspondance (SKOS : `exactMatch`, `broadMatch`, `narrowMatch`). |
+| **Types de données XSD** | `xsd:integer`, `xsd:decimal`, `xsd:string`… : le RDF doit conserver le type de la colonne. |
+| **RML** | *RDF Mapping Language* : un fichier Turtle qui décrit **comment transformer chaque ligne du CSV en triplets RDF**. |
+| **Moteur RML** | Programme qui exécute le mapping : **morph-kgc** (Python, `pip install morph-kgc`) ou **RMLMapper** (Java). |
+
+**Structure d'un mapping RML** (exemple indicatif, non encore exécuté ni validé) :
+
+```turtle
+@prefix rr:  <http://www.w3.org/ns/r2rml#> .
+@prefix rml: <http://semweb.mmlab.be/ns/rml#> .
+@prefix ql:  <http://semweb.mmlab.be/ns/ql#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix proj: <http://example.org/ontology#> .
+
+<#AgeMapping> a rr:TriplesMap ;
+    rml:logicalSource [                              # D'OÙ viennent les données
+        rml:source "data/sample.csv" ;
+        rml:referenceFormulation ql:CSV
+    ] ;
+    rr:subjectMap [                                  # QUI est le sujet de chaque ligne
+        rr:template "http://example.org/patient/{SEQN}" ;
+        rr:class proj:Patient
+    ] ;
+    rr:predicateObjectMap [                          # QUELLE information on en tire
+        rr:predicate proj:hasAge ;
+        rr:objectMap [ rml:reference "Age" ; rr:datatype xsd:integer ]
+    ] .
+```
+
+Résultat RDF attendu pour la première ligne du CSV :
+
+```turtle
+<http://example.org/patient/62161> a proj:Patient ;
+    proj:hasAge "22"^^xsd:integer .
+```
+
+## 3. Mes prochaines actions (dans l'ordre)
+
+1. **Me former aux bases RDF/Turtle** : triplets, préfixes, URIs, types XSD. C'est indispensable pour le RML, et pour pouvoir reprendre `build_ontology.py` en connaissance de cause.
+2. **Revoir l'alignement des 10 variables** en tenant compte des *questions de modélisation* de la semaine 1, en particulier la distinction entre variable (statut) et valeur (maladie).
+3. **Choisir 1 à 2 variables pour le RML** :
+   - `Age` : entier simple, sans codage, pour un premier exemple propre ;
+   - une variable **codée**, `Hypertension` (*Normal / Hypertension*) ou `RheumatoidArthritis` (*0 / 1*), pour voir comment traduire une valeur codée en concept SNOMED.
+4. **Écrire d'abord le mapping RML à la main.** Il sert de **référence** pour juger celui de Qwen (comparaison *manuel vs LLM*).
+5. **Générer le mapping avec Qwen** en utilisant le prompt fourni, et sauvegarder la sortie avec son ID de prompt, comme en semaine 1.
+6. **Exécuter le mapping** avec morph-kgc sur un **petit extrait du CSV** (une dizaine de lignes). Attention : le CSV utilise le séparateur `;` et le nom du fichier contient des espaces ; le plus simple est d'en faire une copie séparée par des virgules.
+7. **Valider** avec la grille : champ source, URI, type/valeur, erreurs de Qwen, corrections manuelles. Noter chaque correction.
+8. **Préparer la démonstration de lundi** : un exemple complet de bout en bout, plus la table d'alignement des autres variables.
+
+## 4. Questions à poser
+
+- **Modélisation** : SNOMED fournit des *concepts*, pas des *propriétés*. Pour `Hypertension = Hypertension`, faut-il produire `patient proj:hasDiagnosis snomed:38341003` (valeur → concept), ou une propriété projet alignée sur SNOMED ?
+- **Espace de noms du projet** : quelle URI de base utiliser pour les *candidate project concepts* (à la place de `http://example.org/ontology#`) ?
+- **Choix de l'ontologie** : le critère « mise à jour la plus récente » s'applique-t-il seulement quand SNOMED ne convient pas, ou à toutes les ontologies ?

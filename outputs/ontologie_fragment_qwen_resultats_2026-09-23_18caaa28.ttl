@@ -1,0 +1,89 @@
+@prefix proj: <http://example.org/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+proj:RheumatoidArthritis rdfs:subClassOf proj:Disease ;
+    rdfs:label "RheumatoidArthritis" ;
+    rdfs:comment "type: binary numeric | example: 0 / 1 | description: Rheumatoid arthritis is a type of arthritis where your immune system attacks the tissue lining the joints on both sides of your body. It may affect other parts of your body, too. The exact cause is unknown. Treatment options include lifestyle changes, physical therapy, occupational therapy, nutritional therapy, medication and surgery." ;
+    proj:hasDiseaseStatus proj:RheumatoidArthritis .
+
+proj:RheumatoidArthritis skos:exactMatch <http://snomed.info/id/69896004> .
+
+<http://snomed.info/id/69896004> rdfs:label "Rheumatoid arthritis" .
+
+proj:BodyRoundnessIndex rdfs:subClassOf proj:Biomarker ;
+    rdfs:label "BodyRoundnessIndex" ;
+    rdfs:comment "type: continuous numeric | example: 4.82 | description:  body roundness index (BRI) – may be more effective at measuring a person’s health. Whereas BMI is determined using one’s height and weight only, BRI also includes an individual’s waist circumference (or roundness) in the calculation. The result is a clearer picture of how body fat is distributed: The more fat in the middle of your body, the more at-risk you are for some health conditions., unitless" ;
+    proj:hasBiomarkerValue proj:BRI .
+
+proj:Age rdfs:subClassOf proj:Demographic ;
+    rdfs:label "Age" ;
+    rdfs:comment "type: integer | example: 22 | description: age in years" ;
+    proj:hasAge proj:Age .
+
+proj:Age skos:exactMatch <http://snomed.info/id/397669002> .
+
+<http://snomed.info/id/397669002> rdfs:label "Age" .
+
+proj:SmokingStatus rdfs:subClassOf proj:Lifestyle ;
+    rdfs:label "SmokingStatus" ;
+    rdfs:comment "type: categorical text | example: Former | description: a standard classification that describes a person's current and past habits regarding tobacco use" ;
+    proj:hasLifestyleFactor proj:SmokingStatus .
+
+proj:SmokingStatus skos:exactMatch <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C19796> .
+
+<http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C19796> rdfs:label "Smoking Status" .
+
+proj:BodyMassIndex rdfs:subClassOf proj:Biomarker ;
+    rdfs:label "BodyMassIndex" ;
+    rdfs:comment "type: continuous numeric | example: 27.4 | description: Body mass index (BMI) is a tool that uses your height and weight to estimate your body fat. It can help identify your risk for certain health conditions, like heart disease. You can calculate your BMI using a simple math formula. BMI has limitations because it doesn’t consider all aspects of your health. in kg/m2" ;
+    proj:hasBiomarkerValue proj:BMI .
+
+proj:BodyMassIndex skos:exactMatch <http://snomed.info/id/60621009> .
+
+<http://snomed.info/id/60621009> rdfs:label "Body mass index" .
+
+proj:DrinkingStatus rdfs:subClassOf proj:Lifestyle ;
+    rdfs:label "DrinkingStatus" ;
+    rdfs:comment "type: ordinal categorical text | example: Occasional drinker | description: is a standardized clinical term used to document a patient's current and historical patterns of alcohol consumption." ;
+    proj:hasLifestyleFactor proj:DrinkingStatus .
+
+proj:DrinkingStatus skos:exactMatch <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C126378> .
+
+<http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C126378> rdfs:label "Drinking Status" .
+
+proj:Hypertension rdfs:subClassOf proj:Disease ;
+    rdfs:label "Hypertension" ;
+    rdfs:comment "type: binary categorical text | example: Normal | description:  Blood pressure is the force of blood pushing against the walls of your arteries as your heart pumps. HTN means this pressure is consistently too high." ;
+    proj:hasDiseaseStatus proj:Hypertension .
+
+proj:Hypertension skos:exactMatch <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C3117> .
+
+<http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C3117> rdfs:label "Hypertension" .
+
+proj:Diabetes rdfs:subClassOf proj:Disease ;
+    rdfs:label "Diabetes" ;
+    rdfs:comment "type: categorical text | example: Prediabetes | description: a chronic condition that causes your blood sugar (glucose) levels to become too high" ;
+    proj:hasDiseaseStatus proj:Diabetes .
+
+proj:Diabetes skos:exactMatch <http://purl.bioontology.org/ontology/LNC/LA10529-8> .
+
+<http://purl.bioontology.org/ontology/LNC/LA10529-8> rdfs:label "Diabetes" .
+
+proj:Hyperlipidemia rdfs:subClassOf proj:Disease ;
+    rdfs:label "Hyperlipidemia" ;
+    rdfs:comment "type: binary categorical text | example: Normal | description: Hyperlipidemia (high cholesterol) means you have too many lipids (fats) in your blood, which increases your risk of heart attack and stroke." ;
+    proj:hasDiseaseStatus proj:Hyperlipidemia .
+
+proj:Hyperlipidemia skos:exactMatch <http://snomed.info/id/55822004> .
+
+<http://snomed.info/id/55822004> rdfs:label "Hyperlipidemia" .
+
+proj:PhysicalActivity rdfs:subClassOf proj:Lifestyle ;
+    rdfs:label "PhysicalActivity" ;
+    rdfs:comment "type: ordinal categorical text | example: Moderate activity | description: any bodily movement produced by skeletal muscles that requires energy expenditure" ;
+    proj:hasLifestyleFactor proj:PhysicalActivity .
+
+proj:PhysicalActivity skos:exactMatch <http://snomed.info/id/390736008> .
+
+<http://snomed.info/id/390736008> rdfs:label "Physical activity" .

@@ -1,0 +1,89 @@
+@prefix proj: <http://example.org/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+
+proj:RheumatoidArthritisPresence rdfs:subClassOf proj:Disease ;
+    rdfs:label "RheumatoidArthritisPresence" ;
+    rdfs:comment "type: binary numeric | example: 0 / 1 | description: presence of rheumatoid arthritis (0 = absence, 1 = presence)" ;
+    proj:hasDiseaseStatus proj:PR .
+
+proj:RheumatoidArthritisPresence skos:exactMatch <http://snomed.info/id/69896004> .
+
+<http://snomed.info/id/69896004> rdfs:label "Rheumatoid arthritis" .
+
+proj:BodyRoundnessIndex rdfs:subClassOf proj:Biomarker ;
+    rdfs:label "BodyRoundnessIndex" ;
+    rdfs:comment "type: continuous numeric | example: 4.82 | description: Body Roundness Index, unitless" ;
+    proj:hasBiomarkerValue proj:BRI .
+
+proj:PatientAge rdfs:subClassOf proj:Demographic ;
+    rdfs:label "PatientAge" ;
+    rdfs:comment "type: integer | example: 22 | description: age in years" ;
+    proj:hasAge proj:Age .
+
+proj:PatientAge skos:exactMatch <http://snomed.info/id/397669002> .
+
+<http://snomed.info/id/397669002> rdfs:label "Age" .
+
+proj:SmokingStatus rdfs:subClassOf proj:Lifestyle ;
+    rdfs:label "SmokingStatus" ;
+    rdfs:comment "type: categorical text | example: Former | description: Never / Current / Former" ;
+    proj:hasLifestyleFactor proj:SmokingStatus .
+
+proj:SmokingStatus skos:exactMatch <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C19796> .
+
+<http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C19796> rdfs:label "Smoking Status" .
+
+proj:BodyMassIndex rdfs:subClassOf proj:Biomarker ;
+    rdfs:label "BodyMassIndex" ;
+    rdfs:comment "type: continuous numeric | example: 27.4 | description: body mass index in kg/m2" ;
+    proj:hasBiomarkerValue proj:BMI .
+
+proj:BodyMassIndex skos:exactMatch <http://snomed.info/id/60621009> .
+
+<http://snomed.info/id/60621009> rdfs:label "Body mass index" .
+
+proj:AlcoholConsumptionStatus rdfs:subClassOf proj:Lifestyle ;
+    rdfs:label "AlcoholConsumptionStatus" ;
+    rdfs:comment "type: ordinal categorical text | example: Occasional drinker | description: Almost non-drinker / Occasional drinker / Frequent drinker" ;
+    proj:hasLifestyleFactor proj:DrinkingStatus .
+
+proj:AlcoholConsumptionStatus skos:exactMatch <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C126378> .
+
+<http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C126378> rdfs:label "Drinking Status" .
+
+proj:HypertensionStatus rdfs:subClassOf proj:Disease ;
+    rdfs:label "HypertensionStatus" ;
+    rdfs:comment "type: binary categorical text | example: Normal | description: Normal / Hypertension" ;
+    proj:hasDiseaseStatus proj:Hypertension .
+
+proj:HypertensionStatus skos:exactMatch <http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C3117> .
+
+<http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#C3117> rdfs:label "Hypertension" .
+
+proj:DiabetesStatus rdfs:subClassOf proj:Disease ;
+    rdfs:label "DiabetesStatus" ;
+    rdfs:comment "type: categorical text | example: Prediabetes | description: Normal / Prediabetes / Diabetes" ;
+    proj:hasDiseaseStatus proj:Diabetes .
+
+proj:DiabetesStatus skos:exactMatch <http://purl.bioontology.org/ontology/LNC/LA10529-8> .
+
+<http://purl.bioontology.org/ontology/LNC/LA10529-8> rdfs:label "Diabetes" .
+
+proj:HyperlipidemiaStatus rdfs:subClassOf proj:Disease ;
+    rdfs:label "HyperlipidemiaStatus" ;
+    rdfs:comment "type: binary categorical text | example: Normal | description: Normal / Hyperlipidemia" ;
+    proj:hasDiseaseStatus proj:Hyperlipidemia .
+
+proj:HyperlipidemiaStatus skos:exactMatch <http://snomed.info/id/55822004> .
+
+<http://snomed.info/id/55822004> rdfs:label "Hyperlipidemia" .
+
+proj:PhysicalActivityLevel rdfs:subClassOf proj:Lifestyle ;
+    rdfs:label "PhysicalActivityLevel" ;
+    rdfs:comment "type: ordinal categorical text | example: Moderate activity | description: Sedentary / Moderate activity / Vigorous activity / Other" ;
+    proj:hasLifestyleFactor proj:PhysicalActivity .
+
+proj:PhysicalActivityLevel skos:exactMatch <http://snomed.info/id/390736008> .
+
+<http://snomed.info/id/390736008> rdfs:label "Physical activity" .
