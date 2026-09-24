@@ -1,0 +1,105 @@
+@prefix : <http://example.org/ontologie-snomed-qwen#> .
+@prefix snomed: <http://purl.bioontology.org/ontology/SNOMEDCT/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+#################################################################
+# Classes
+#################################################################
+
+:Questionnaire a owl:Class ; rdfs:label "Questionnaire" .
+:QuestionnaireItem a owl:Class ; rdfs:label "Questionnaire Item" .
+:ClinicalConcept a owl:Class ; rdfs:label "Clinical Concept" .
+:ResponseScale a owl:Class ; rdfs:label "Response Scale" .
+
+#################################################################
+# Object properties
+#################################################################
+
+:hasItem a owl:ObjectProperty ;
+    rdfs:domain :Questionnaire ; rdfs:range :QuestionnaireItem ;
+    rdfs:label "has item" .
+
+:assesses a owl:ObjectProperty ;
+    rdfs:domain :QuestionnaireItem ; rdfs:range :ClinicalConcept ;
+    rdfs:label "assesses" .
+
+:hasResponseScale a owl:ObjectProperty ;
+    rdfs:domain :QuestionnaireItem ; rdfs:range :ResponseScale ;
+    rdfs:label "has response scale" .
+
+#################################################################
+# Questionnaires
+#################################################################
+
+:PHQ9 a :Questionnaire ; rdfs:label "Patient Health Questionnaire-9 (PHQ-9)" ;
+    :hasItem :phq1, :phq3, :phq9 .
+:GAD7 a :Questionnaire ; rdfs:label "Generalized Anxiety Disorder-7 (GAD-7)" ;
+    :hasItem :gad1, :gad3, :gad7 .
+:ESS  a :Questionnaire ; rdfs:label "Epworth Sleepiness Scale (ESS)" ;
+    :hasItem :epw1, :epw4 .
+
+#################################################################
+# Response scales (shared where identical)
+#################################################################
+
+:Scale0to3Frequency a :ResponseScale ;
+    rdfs:label "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day" .
+
+:Scale0to3Likelihood a :ResponseScale ;
+    rdfs:label "0=Would never doze, 1=Slight chance, 2=Moderate chance, 3=High chance" .
+
+#################################################################
+# Clinical concepts (validated SNOMED CT URIs only -- none invented)
+#################################################################
+
+snomed:28669007  a :ClinicalConcept ; rdfs:label "Anhedonia" .
+snomed:26677001  a :ClinicalConcept ; rdfs:label "Sleep pattern disturbance" .
+snomed:6471006   a :ClinicalConcept ; rdfs:label "Suicidal thoughts" .
+snomed:48694002  a :ClinicalConcept ; rdfs:label "Anxiety" .
+snomed:271782001 a :ClinicalConcept ; rdfs:label "Drowsy" .
+
+#################################################################
+# Questionnaire items -- item, concept and scale kept as separate entities
+#################################################################
+
+:phq1 a :QuestionnaireItem ;
+    rdfs:label "Little interest or pleasure in doing things" ;
+    :assesses snomed:28669007 ;
+    :hasResponseScale :Scale0to3Frequency .
+
+:phq3 a :QuestionnaireItem ;
+    rdfs:label "Trouble falling or staying asleep, or sleeping too much" ;
+    :assesses snomed:26677001 ;
+    :hasResponseScale :Scale0to3Frequency .
+
+:phq9 a :QuestionnaireItem ;
+    rdfs:label "Thoughts that you would be better off dead, or of hurting yourself in some way" ;
+    :assesses snomed:6471006 ;
+    :hasResponseScale :Scale0to3Frequency .
+
+:gad1 a :QuestionnaireItem ;
+    rdfs:label "Feeling nervous, anxious, or on edge" ;
+    :assesses snomed:48694002 ;
+    :hasResponseScale :Scale0to3Frequency .
+
+:gad3 a :QuestionnaireItem ;
+    rdfs:label "Worrying too much about different things" ;
+    :assesses snomed:48694002 ;
+    :hasResponseScale :Scale0to3Frequency .
+
+:gad7 a :QuestionnaireItem ;
+    rdfs:label "Feeling afraid as if something awful might happen" ;
+    :assesses snomed:48694002 ;
+    :hasResponseScale :Scale0to3Frequency .
+
+:epw1 a :QuestionnaireItem ;
+    rdfs:label "Chance of dozing while sitting and reading" ;
+    :assesses snomed:271782001 ;
+    :hasResponseScale :Scale0to3Likelihood .
+
+:epw4 a :QuestionnaireItem ;
+    rdfs:label "Chance of dozing as a passenger in a car for an hour without a break" ;
+    :assesses snomed:271782001 ;
+    :hasResponseScale :Scale0to3Likelihood .
