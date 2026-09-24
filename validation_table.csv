@@ -1,0 +1,9 @@
+Item ID,Measured concept,SNOMED CT concept,Preferred label,URI/ID,Match,RDF syntax,Semantic validation,Manual correction made,Comment
+phq1,depression,Anhedonia,Anhedonia,28669007,Narrower,Pass,Correct,Yes,Qwen's term was too generic; search was refined toward a precise finding-level concept
+phq3,sleep disturbance,Sleep pattern disturbance,Sleep pattern disturbance,26677001,Exact,Pass,Correct,Yes,"Initial search returned 'Dyssomnia', a disorder-level concept; discarded in favor of a finding-level match"
+phq9,suicidal ideation,Suicidal thoughts,Suicidal thoughts,6471006,Exact,Pass,Correct,No,Direct match found on the first search
+gad1,anxiety,Anxiety,Anxiety,48694002,Exact,Pass,Correct,No,Official synonym 'Feeling anxious' closely matches the item wording
+gad3,anxiety,Anxiety,Anxiety,48694002,Broader,Pass,Uncertain,No,No more specific concept found for 'excessive worry'
+gad7,anxiety,Anxiety,Anxiety,48694002,Broader,Pass,Uncertain,No,No more specific concept found for 'fear of disaster'
+epw1,sleepiness,Drowsy,Drowsy,271782001,Exact,Pass,Correct,Yes,'Excessive somnolence' was discarded as too interpretive relative to the item's literal wording
+epw4,sleepiness,Drowsy,Drowsy,271782001,Exact,Pass,Correct,Yes,Same reasoning as epw1
