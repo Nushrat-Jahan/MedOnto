@@ -1,0 +1,24 @@
+# Présentations personnelles (conservées en local uniquement)
+docs/Presentation_Olti*
+docs/*.pptx
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+
+# R / RStudio
+.Rhistory
+.RData
+.Rproj.user/
+*_cache/
+*_files/
+
+# Système / éditeurs
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
