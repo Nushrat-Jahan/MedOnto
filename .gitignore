@@ -1,3 +1,6 @@
+# Données de cohorte (jamais versionnées)
+data/
+
 # Présentations personnelles (conservées en local uniquement)
 docs/Presentation_Olti*
 docs/*.pptx
