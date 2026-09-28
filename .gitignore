@@ -6,6 +6,9 @@ docs/Presentation_Olti*
 docs/*.pptx
 docs/*.pdf
 
+# Notes de contexte personnelles (local uniquement)
+contexte.txt
+
 # Python
 __pycache__/
 *.py[cod]
