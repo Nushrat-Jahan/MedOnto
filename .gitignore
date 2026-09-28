@@ -4,6 +4,7 @@ data/
 # Présentations personnelles (conservées en local uniquement)
 docs/Presentation_Olti*
 docs/*.pptx
+docs/*.pdf
 
 # Python
 __pycache__/
