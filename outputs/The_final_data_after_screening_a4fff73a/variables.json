@@ -1,0 +1,281 @@
+{
+  "dataset": "The final data after screening.csv",
+  "dataset_id": "a4fff73a",
+  "variables": [
+    {
+      "name": "SEQN",
+      "type": "identifier",
+      "example": 62161,
+      "n_distinct": 13273,
+      "values": null,
+      "range": null
+    },
+    {
+      "name": "RheumatoidArthritis",
+      "type": "binary numeric",
+      "example": 0,
+      "n_distinct": 2,
+      "values": [
+        0,
+        1
+      ],
+      "range": null
+    },
+    {
+      "name": "BRI",
+      "type": "decimal",
+      "example": 2.81537121,
+      "n_distinct": 12605,
+      "values": null,
+      "range": "any value between 1.048868598 and 20.9700569"
+    },
+    {
+      "name": "Gender",
+      "type": "binary text",
+      "example": "Male",
+      "n_distinct": 2,
+      "values": [
+        "Female",
+        "Male"
+      ],
+      "range": null
+    },
+    {
+      "name": "Age",
+      "type": "integer",
+      "example": 22,
+      "n_distinct": 61,
+      "values": null,
+      "range": "any value between 20 and 80"
+    },
+    {
+      "name": "Race",
+      "type": "categorical text",
+      "example": "Non-Hispanic White",
+      "n_distinct": 4,
+      "values": [
+        "Mexican American",
+        "Non-Hispanic Black",
+        "Non-Hispanic White",
+        "Other"
+      ],
+      "range": null
+    },
+    {
+      "name": "EducationLevel",
+      "type": "categorical text",
+      "example": "High school graduate",
+      "n_distinct": 3,
+      "values": [
+        "Above high school",
+        "Below high school",
+        "High school graduate"
+      ],
+      "range": null
+    },
+    {
+      "name": "MaritalStatus",
+      "type": "binary text",
+      "example": "Living Alone",
+      "n_distinct": 2,
+      "values": [
+        "Living Alone",
+        "Living With A Partner"
+      ],
+      "range": null
+    },
+    {
+      "name": "FamilyIncome",
+      "type": "categorical text",
+      "example": "(1.3,3.5]",
+      "n_distinct": 3,
+      "values": [
+        "(1.3,3.5]",
+        "PIR <= 1.3",
+        "PIR > 3.5"
+      ],
+      "range": null
+    },
+    {
+      "name": "PhysicalActivity",
+      "type": "categorical text",
+      "example": "Other",
+      "n_distinct": 4,
+      "values": [
+        "Moderate activity",
+        "Other",
+        "Sedentary",
+        "Vigorous activity"
+      ],
+      "range": null
+    },
+    {
+      "name": "SmokingStatus",
+      "type": "categorical text",
+      "example": "Never",
+      "n_distinct": 3,
+      "values": [
+        "Current",
+        "Former",
+        "Never"
+      ],
+      "range": null
+    },
+    {
+      "name": "BMI",
+      "type": "decimal",
+      "example": 23.3,
+      "n_distinct": 445,
+      "values": null,
+      "range": "any value between 14.1 and 82.0"
+    },
+    {
+      "name": "DrinkingStatus",
+      "type": "categorical text",
+      "example": "Almost non-drinker",
+      "n_distinct": 3,
+      "values": [
+        "Almost non-drinker",
+        "Frequent drinker",
+        "Occasional drinker"
+      ],
+      "range": null
+    },
+    {
+      "name": "Hypertension",
+      "type": "binary text",
+      "example": "Normal",
+      "n_distinct": 2,
+      "values": [
+        "Hypertension",
+        "Normal"
+      ],
+      "range": null
+    },
+    {
+      "name": "Diabetes",
+      "type": "categorical text",
+      "example": "Normal",
+      "n_distinct": 3,
+      "values": [
+        "Diabetes",
+        "Normal",
+        "Prediabetes"
+      ],
+      "range": null
+    },
+    {
+      "name": "Hyperlipidemia",
+      "type": "binary text",
+      "example": "Normal",
+      "n_distinct": 2,
+      "values": [
+        "Hyperlipidemia",
+        "Normal"
+      ],
+      "range": null
+    },
+    {
+      "name": "CalorieConsumption",
+      "type": "integer",
+      "example": 2969,
+      "n_distinct": 3766,
+      "values": null,
+      "range": "any value between 0 and 13687"
+    },
+    {
+      "name": "ProteinConsumption",
+      "type": "decimal",
+      "example": 104.68,
+      "n_distinct": 8472,
+      "values": null,
+      "range": "any value between 0.0 and 557.87"
+    },
+    {
+      "name": "CarbohydrateConsumption",
+      "type": "decimal",
+      "example": 359.59,
+      "n_distinct": 11186,
+      "values": null,
+      "range": "any value between 0.0 and 1815.02"
+    },
+    {
+      "name": "FatConsumption",
+      "type": "decimal",
+      "example": 123.81,
+      "n_distinct": 8833,
+      "values": null,
+      "range": "any value between 0.0 and 553.79"
+    },
+    {
+      "name": "CaffeineConsumption",
+      "type": "integer",
+      "example": 0,
+      "n_distinct": 784,
+      "values": null,
+      "range": "any value between 0 and 4320"
+    },
+    {
+      "name": "FiberConsumption",
+      "type": "decimal",
+      "example": 18.6,
+      "n_distinct": 633,
+      "values": null,
+      "range": "any value between 0.0 and 136.3"
+    },
+    {
+      "name": "PSU",
+      "type": "integer",
+      "example": 1,
+      "n_distinct": 3,
+      "values": [
+        1,
+        2,
+        3
+      ],
+      "range": null
+    },
+    {
+      "name": "STRATA",
+      "type": "integer",
+      "example": 91,
+      "n_distinct": 68,
+      "values": null,
+      "range": "any value between 90 and 172"
+    },
+    {
+      "name": "BRI_Grp",
+      "type": "categorical text",
+      "example": "[1.049, 3.666]",
+      "n_distinct": 4,
+      "values": [
+        "(3.666, 4.924]",
+        "(4.924, 6.477]",
+        "(6.477, 20.970]",
+        "[1.049, 3.666]"
+      ],
+      "range": null
+    },
+    {
+      "name": "BRI_Trend",
+      "type": "integer",
+      "example": 0,
+      "n_distinct": 4,
+      "values": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "range": null
+    },
+    {
+      "name": "Weight",
+      "type": "decimal",
+      "example": 22313.34923,
+      "n_distinct": 11038,
+      "values": null,
+      "range": "any value between 683.0990563 and 117691.687"
+    }
+  ]
+}
