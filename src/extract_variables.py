@@ -9,6 +9,7 @@ Test rapide, depuis la racine du projet :
 
 import csv
 import hashlib
+import json
 import sys
 from pathlib import Path
 import pandas as pd
@@ -17,6 +18,7 @@ ENCODINGS = ["utf-8-sig", "latin-1"]  # UTF-8 (avec BOM Excel), puis Latin-1 en 
 SEPARATORS = ",;\t|"  # séparateurs autorisés : virgule, point-virgule, tabulation, barre
 SAMPLE_SIZE = 64 * 1024  # extrait de 64 Ko : suffisant pour détecter encodage et séparateur
 MAX_CATEGORIES = 20  # au-delà, on ne liste plus les valeurs possibles d'une colonne
+OUT_DIR = Path("outputs")  # dossier racine des résultats (chemin relatif à la racine du projet)
 
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
@@ -175,6 +177,42 @@ def extract_variables(df: pd.DataFrame) -> list[dict]:
     return variables
 
 
+def save_variables(variables: list[dict], dataset_path: str | Path, ds_id: str) -> Path:
+    """Enregistre les variables extraites dans outputs/<nom_base>_<id>/variables.json.
+
+    Chaque base a son propre dossier de résultats, nommé d'après le nom du fichier
+    (sans extension, espaces remplacés par "_") suivi de son identifiant (dataset_id).
+    Le dossier est créé s'il n'existe pas. Si variables.json existe déjà pour cette base,
+    il est remplacé : pour une même base, l'extraction donne toujours le même résultat.
+
+    Le fichier contient le nom de la base et son identifiant en en-tête, puis la liste
+    des variables, pour savoir d'où vient chaque résultat.
+
+    Paramètres :
+        variables    : la liste renvoyée par extract_variables.
+        dataset_path : chemin du fichier de la base (sert à nommer le dossier).
+        ds_id        : identifiant de la base, renvoyé par dataset_id.
+
+    Renvoie :
+        le chemin du fichier variables.json écrit.
+    """
+    # Dossier de la base, ex. outputs/The_final_data_after_screening_a4fff73a/
+    dataset_name = Path(dataset_path).stem.replace(" ", "_")
+    dataset_dir = OUT_DIR / f"{dataset_name}_{ds_id}"
+    dataset_dir.mkdir(parents=True, exist_ok=True)
+
+    # Contenu : en-tête (base + ID) puis les variables
+    output = {
+        "dataset": Path(dataset_path).name,
+        "dataset_id": ds_id,
+        "variables": variables,
+    }
+
+    out_path = dataset_dir / "variables.json"
+    out_path.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+    return out_path
+
+
 if __name__ == "__main__":
     # Test manuel : charge la base passée en argument et affiche un aperçu
     if len(sys.argv) != 2:
@@ -198,5 +236,12 @@ if __name__ == "__main__":
 
     # Test de extract_variables : une ligne par variable
     print()
-    for variable in extract_variables(df):
+    variables = extract_variables(df)
+    for variable in variables:
         print(f"{variable['name']:25} | {variable['type']:16} | exemple : {variable['example']} | valeurs : {variable['values']} | intervalle : {variable['range']}")
+
+    # Test de save_variables : écriture du JSON puis relecture pour vérifier
+    print()
+    out_path = save_variables(variables, sys.argv[1], dataset_id(df))
+    saved = json.loads(out_path.read_text(encoding="utf-8"))
+    print(f"{len(saved['variables'])} variables enregistrées dans '{out_path}'")
