@@ -1,0 +1,18 @@
+Example 1:
+Context:
+Paciente de 70 años con cefalea intensa y fiebre de 39 °C. Se inicia tratamiento con paracetamol.
+Task: extract the key concepts.
+Output:
+["cefalea intensa", "fiebre", "paracetamol"]
+
+Example 2:
+Context:
+Mujer de 45 años con dolor abdominal en fosa iliaca derecha y leucocitosis. Se diagnostica apendicitis aguda y se realiza apendicectomía.
+Task: extract the key concepts.
+Output:
+["dolor abdominal", "leucocitosis", "apendicitis aguda", "apendicectomía"]
+
+Context:
+{txt}
+
+Task: extract the key concepts.
