@@ -1,94 +1,86 @@
-import re 
-import torch 
+from dataclasses import dataclass
 from typing import Any
-from torch.utils.data import Dataset,DataLoader
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from tqdm import tqdm
-from src.utils import load_txt_file,load_toml_file
-import re
-from typing import Any
-
 import torch
-from torch.utils.data import Dataset, DataLoader
-from tqdm import tqdm
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
+from src.utils import load_txt_file, load_toml_file, parse_concept_list
 
-DEFAULT_SYSTEM_PROMPT = (
-    "You are a biomedical information extraction assistant. "
-    "Extract the medical concepts mentioned in the text: diseases, symptoms, "
-    "drugs, procedures, anatomical structures and clinical findings. "
-    "Rules: "
-    "1) Copy each concept exactly as it appears in the text, without rewording. "
-    "2) Do not add concepts that are not in the text. "
-    "3) Do not explain anything. "
-    "4) Return only a JSON list of strings, for example: "
-    '["chest pain", "type 2 diabetes", "aspirin"]. '
-    "If there are no concepts, return []."
-)
+PROMPTS_DIR = "configs/systems_prompt"
 
 
-class CorpusDataset(Dataset):
-    def __init__(self, text: str, size: int, overlap: int):
-        words: list[re.Match] = list(re.finditer(r"\S+", text))
-        step: int = size - overlap
-        self.items: list[dict[str, str | int]] = []
-        for i in range(0, len(words), step):
-            group = words[i:i + size]
-            start, end = group[0].start(), group[-1].end()
-            self.items.append({"text": text[start:end], "offset": start})
-
-    def __len__(self):
-        return len(self.items)
-
-    def __getitem__(self, i):
-        return self.items[i]
+@dataclass
+class Document:
+    text: str
 
 
-def make_collate(tokenizer, system_prompt=DEFAULT_SYSTEM_PROMPT):
-    tokenizer.padding_side = "left"
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-
-    def collate(batch):
+class SpanExtractionDataset(Dataset):
+    def __init__(
+        self,
+        documents: list[Document],
+        tokenizer: AutoTokenizer,
+        system_prompt: str,
+        user_template: str,
+        max_length: int = 1024,
+    ):
         prompts = [
             tokenizer.apply_chat_template(
-                [{"role": "system", "content": system_prompt},
-                 {"role": "user", "content": f"Text:\n{b['text']}\n\nTask: extract the key medical concepts."}],
-                add_generation_prompt=True, tokenize=False)
-            for b in batch
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_template.replace("{txt}", document.text)},
+                ],
+                add_generation_prompt=True,
+                tokenize=False,
+            )
+            for document in documents
         ]
-        enc = tokenizer(prompts, return_tensors="pt", padding=True)
-        return enc, [b["offset"] for b in batch]
-    return collate
+        self.encodings = tokenizer(
+            prompts, return_tensors="pt", padding=True, truncation=True, max_length=max_length
+        )
+
+    def __len__(self) -> int:
+        return self.encodings["input_ids"].shape[0]
+
+    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
+        return {key: value[index] for key, value in self.encodings.items()}
 
 
-def main(model_configs_path: str, txt_file_path: str):
+def main(model_configs_path: str, txt_file_path: str | list[str]) -> list[list[str] | None]:
     model_config: dict[str, Any] = load_toml_file(model_configs_path)
-    txt: str = load_txt_file(txt_file_path)
+    if isinstance(txt_file_path, str):
+        txts: list[str] = [load_txt_file(txt_file_path)]
+    else:
+        txts: list[str] = [load_txt_file(path) for path in txt_file_path]
+
+    system_prompt: str = load_txt_file(PROMPTS_DIR + "/system_prompt.txt").strip()
+    user_template: str = load_txt_file(PROMPTS_DIR + "/user_template.txt").strip()
 
     model_id = model_config.pop("model_id")
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id, **model_config)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-    loader = DataLoader(
-        CorpusDataset(txt, size=300, overlap=50),
-        batch_size=4,
-        collate_fn=make_collate(tokenizer),
-    )
+    datasets = [
+        SpanExtractionDataset([Document(text=txt)], tokenizer, system_prompt, user_template)
+        for txt in txts
+    ]
+    loaders = [DataLoader(dataset, batch_size=1) for dataset in datasets]
 
-    answers = []
+    results: list[list[str] | None] = []
     with torch.no_grad():
-        for enc, offsets in tqdm(loader, desc="Extracting"):
-            enc = enc.to(model.device)
-            output = model.generate(**enc, max_new_tokens=300, do_sample=False)
-            generated = output[:, enc["input_ids"].shape[1]:]
-            texts = tokenizer.batch_decode(generated, skip_special_tokens=True)
-            answers.extend(zip(offsets, texts))
+        for loader in loaders:
+            for batch in loader:
+                batch = {key: value.to(model.device) for key, value in batch.items()}
+                output = model.generate(**batch, max_new_tokens=300, do_sample=False)
+                input_length = batch["input_ids"].shape[1]
+                answer = tokenizer.decode(output[0][input_length:], skip_special_tokens=True)
+                results.append(parse_concept_list(answer))
 
-    return answers
+    return results
+
+
+if __name__ == "__main__":
+    print(main("configs/models/qwen2-5_config.toml", "text/test.txt"))
 
 
 
-
-if __name__ == "__main__": 
-    print(main("configs/qwen2-5_config.toml","text/test.txt"))
