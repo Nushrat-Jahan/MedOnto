@@ -1,26 +1,18 @@
+from src.preprocess import preprocess
 from src.spanextraction import spanextraction, Triplet
-from src.preprocess import clean_outputs
-from tqdm import tqdm
+from src.postprocess import postprocess
 
 
-
-def main(model_configs_path: str, txt_file_path: str | list[str]):
-    lists_triplets_raw:list[list[Triplet]] = spanextraction(model_configs_path,txt_file_path)
-    lists_triplets_clean:list[list[Triplet]] = []
-    for list_triplets in tqdm(lists_triplets_raw,desc = "Cleaning Triplets"):
-        lists_triplets_raw.append(clean_outputs(list_triplets))
-
-    
-
-    print(lists_triplets_clean)
-
+def main(
+    model_configs_path: str,
+    txt_file_path: str | list[str],
+    gliner_model_path: str = "configs/models/gliner-qwen-0.5B-v1.0.toml",
+) -> list[list[Triplet]]:
+    clean_texts = preprocess(txt_file_path, gliner_model_path)
+    lists_triplets_raw = spanextraction(model_configs_path, clean_texts)
+    lists_triplets_clean = postprocess(lists_triplets_raw)
+    return lists_triplets_clean
 
 
-
-
-
-
-
-
-if __name__ == "__main__": 
-    main("configs/models/qwen2-5_config.toml", "text/test.txt")
+if __name__ == "__main__":
+    print(main("configs/models/qwen2-5_config.toml", "text/test.txt"))

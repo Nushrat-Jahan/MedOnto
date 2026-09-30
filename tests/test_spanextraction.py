@@ -1,7 +1,8 @@
 import pytest
 from transformers import AutoTokenizer
 
-from src.spanextraction import Document, SpanExtractionDataset, Triplet, main
+from src.spanextraction import Document, SpanExtractionDataset, Triplet
+from src.pipeline import main
 from src.utils import load_txt_file
 
 MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
