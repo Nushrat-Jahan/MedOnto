@@ -52,12 +52,8 @@ class SpanExtractionDataset(Dataset):
         return {key: value[index] for key, value in self.encodings.items()}
 
 
-def spanextraction(model_configs_path: str, txt_file_path: str | list[str]) -> list[list[Triplet]]:
+def spanextraction(model_configs_path: str, documents: list[str]) -> list[list[Triplet]]:
     model_config: dict[str, Any] = load_toml_file(model_configs_path)
-    if isinstance(txt_file_path, str):
-        txts: list[str] = [load_txt_file(txt_file_path)]
-    else:
-        txts: list[str] = [load_txt_file(path) for path in txt_file_path]
 
     system_prompt: str = load_txt_file(PROMPTS_DIR + "/system_prompt.txt").strip()
     user_template: str = load_txt_file(PROMPTS_DIR + "/user_template.txt").strip()
@@ -69,11 +65,10 @@ def spanextraction(model_configs_path: str, txt_file_path: str | list[str]) -> l
         tokenizer.pad_token = tokenizer.eos_token
 
     datasets = [
-        SpanExtractionDataset([Document(text=txt)], tokenizer, system_prompt, user_template)
-        for txt in txts
+        SpanExtractionDataset([Document(text=document)], tokenizer, system_prompt, user_template)
+        for document in documents
     ]
     loaders = [DataLoader(dataset, batch_size=1) for dataset in datasets]
-    i = 1
     results: list[list[Triplet]] = []
     with torch.no_grad():
         for loader in tqdm(loaders,desc = "Extracting Triplets"):
@@ -87,12 +82,12 @@ def spanextraction(model_configs_path: str, txt_file_path: str | list[str]) -> l
                 if parsed:
                     file_triplets.extend(Triplet(*triplet) for triplet in parsed)
             results.append(file_triplets)
-            i+=1
     return results
 
 
 if __name__ == "__main__":
-    print(spanextraction("configs/models/qwen2-5_config.toml", "text/test.txt"))
+    from src.preprocess import preprocess
+    print(spanextraction("configs/models/qwen2-5_config.toml", preprocess("text/test.txt", "configs/models/gliner-qwen-0.5B-v1.0.toml")))
 
 
 
