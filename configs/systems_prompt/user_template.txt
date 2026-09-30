@@ -1,18 +1,18 @@
 Example 1:
 Context:
 Paciente de 70 años con cefalea intensa y fiebre de 39 °C. Se inicia tratamiento con paracetamol.
-Task: extract the key concepts.
+Task: extract the (subject, relation, object) triples.
 Output:
-["cefalea intensa", "fiebre", "paracetamol"]
+[{"subject": "Paciente", "relation": "presenta", "object": "cefalea intensa"}, {"subject": "Paciente", "relation": "presenta", "object": "fiebre"}, {"subject": "Paciente", "relation": "tratamiento", "object": "paracetamol"}]
 
 Example 2:
 Context:
 Mujer de 45 años con dolor abdominal en fosa iliaca derecha y leucocitosis. Se diagnostica apendicitis aguda y se realiza apendicectomía.
-Task: extract the key concepts.
+Task: extract the (subject, relation, object) triples.
 Output:
-["dolor abdominal", "leucocitosis", "apendicitis aguda", "apendicectomía"]
+[{"subject": "Mujer", "relation": "presenta", "object": "dolor abdominal"}, {"subject": "Mujer", "relation": "presenta", "object": "leucocitosis"}, {"subject": "Mujer", "relation": "diagnostico", "object": "apendicitis aguda"}, {"subject": "apendicitis aguda", "relation": "tratamiento", "object": "apendicectomía"}]
 
 Context:
 {txt}
 
-Task: extract the key concepts.
+Task: extract the (subject, relation, object) triples.
