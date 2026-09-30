@@ -1,7 +1,7 @@
 import pytest
 from transformers import AutoTokenizer
 
-from src.spanextraction import Document, SpanExtractionDataset, main
+from src.spanextraction import Document, SpanExtractionDataset, Triplet, main
 from src.utils import load_txt_file
 
 MODEL_ID = "Qwen/Qwen2.5-1.5B-Instruct"
@@ -17,6 +17,17 @@ def tokenizer():
 def test_document_dataclass():
     doc = Document(text="hola")
     assert doc.text == "hola"
+
+
+def test_triplet_dataclass():
+    t = Triplet(subject="Paciente", relation="presenta", object="cefalea")
+    assert t.subject == "Paciente"
+    assert t.relation == "presenta"
+    assert t.object == "cefalea"
+
+
+def flatten_triplets(triplets):
+    return " | ".join(f"{t.subject} {t.relation} {t.object}" for t in triplets)
 
 
 def test_dataset_length(tokenizer):
@@ -60,10 +71,11 @@ def test_main_end_to_end_single_file():
     results = main(CONFIG_PATH, TEST_TXT)
     assert isinstance(results, list)
     assert len(results) == 1
-    concepts = results[0]
-    assert isinstance(concepts, list)
-    assert len(concepts) > 0
-    joined = " | ".join(concepts)
+    triplets = results[0]
+    assert isinstance(triplets, list)
+    assert len(triplets) > 0
+    assert all(isinstance(t, Triplet) for t in triplets)
+    joined = flatten_triplets(triplets)
     assert "infarto" in joined
     assert "metformina" in joined
     assert "Ã" not in joined
@@ -81,10 +93,10 @@ def test_main_multiple_files(tmp_path):
     assert len(results) == 2
     assert all(isinstance(r, list) and len(r) > 0 for r in results)
 
-    first = " | ".join(results[0])
+    first = flatten_triplets(results[0])
     assert "infarto" in first
     assert "paracetamol" not in first
 
-    second_concepts = " | ".join(results[1])
-    assert "paracetamol" in second_concepts
-    assert "infarto" not in second_concepts
+    second = flatten_triplets(results[1])
+    assert "paracetamol" in second
+    assert "infarto" not in second
