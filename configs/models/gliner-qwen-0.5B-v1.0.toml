@@ -1,0 +1,8 @@
+model_id = "knowledgator/gliner-qwen-0.5B-v1.0"
+labels = [
+    "drug",
+    "disease",
+    "biomarker",
+    "symptom"
+]
+threshold_score = 0.15
