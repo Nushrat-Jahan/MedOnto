@@ -1,7 +1,14 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING,Any
+if TYPE_CHECKING:
+    from src.spanextraction import Triplet
+
 import json
 import re
 import tomllib
-from typing import Any
+
+
+
 
 def load_txt_file(text_path:str) -> str: 
     with open(text_path, encoding="utf-8") as f:
@@ -17,6 +24,10 @@ def load_toml_file(toml_path:str) -> dict[str,any]:
 
     return toml
 
+
+def write_json_file(json_path:str,data) -> None: 
+    with open(json_path,"w") as f:
+        json.dump(data,f)
 
 def parse_concept_list(raw: str) -> list[str] | None:
     text = re.sub(r"```[a-zA-Z]*", "", raw.strip())
@@ -93,4 +104,13 @@ def parse_triplet_list(raw: str) -> list[tuple[str, str, str]] | None:
         triplets.append(triplet)
     return triplets
 
+def make_dict_from_triplets(triplet:Triplet) -> dict[str,str]:
+    return {
+        "subject":triplet.subject,
+        "relation":triplet.relation,
+        "object":triplet.object
+    }
+
+def make_json_from_triplets(triplets:list[Triplet]): 
+    return [make_dict_from_triplets(triplet) for triplet in triplets]
 
