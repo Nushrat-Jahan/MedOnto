@@ -4,6 +4,16 @@ from typing import Any
 from gliner import GLiNER
 from src.utils import load_txt_file,load_toml_file
 
+try:
+    from nltk.corpus import stopwords
+    STOPWORDS = set(stopwords.words("english"))
+except Exception as e:
+    raise ImportError(
+        "NLTK required. Install: pip install nltk\n"
+        "Then: python -c \"import nltk; nltk.download('stopwords')\""
+    ) from e
+
+
 _MOJIBAKE_MARKERS = ("Ã", "Â", "â€")
 
 _LINE_BREAK_HYPHEN_RE = re.compile(r"-\n[ ]*(?=[a-záéíóúüñ])")
@@ -17,8 +27,11 @@ DEFAULT_LABELS = [
     "biomarker",
     "symptom"
 ]
+
+THRESHOLD_DENSITY_DEFAULT = 0.05
 THRESHOLD_SCORE_DEFAULT = 0.15
 ENTITY_SCORE_FLOOR = 0.1
+
 
 
 def _fix_mojibake(text: str) -> str:
@@ -60,17 +73,43 @@ def load_gliner_model(gliner_model_path:str) -> tuple[GLiNER,list[str],float]:
 
     return model,labels,threshold_score
 
-def filter_text(txt:str,model:GLiNER,labels:list[str],threshold_score:float) -> bool:
+def compute_average_sematic_score(txt:str,model:GLiNER,labels:list[str])  -> float: 
     if not txt.strip():
-        return False
+        return 0
     entities:list[dict[str,str|float]] = model.predict_entities(txt,labels,threshold=ENTITY_SCORE_FLOOR)
     if not entities:
-        return False
+        return 0
+    return (sum(entitie["score"] for entitie in entities)/len(entities))
 
-    return (sum(entitie["score"] for entitie in entities)/len(entities)) >= threshold_score
+def filter_text_average_score(txt: str, model: GLiNER, labels: list[str], threshold_score: float) -> bool:
+    return compute_average_sematic_score(txt, model, labels) >= threshold_score
 
 
+def eliminate_stopwords(txt:str) -> list[str]: 
+    tokens = txt.split()
+    return [
+        token for token in tokens
+        if token.lower() not in STOPWORDS
+    ]
 
+def compute_density_semantic(txt:str,model:GLiNER,labels:list[str],stopwords = False) -> float: 
+    if not txt.strip():
+        return 0
+    
+    if stopwords:
+        n_tokens = len(eliminate_stopwords(txt))
+    else:
+        n_tokens = len(txt.split())
+    entities:list[dict[str,str|float]] = model.predict_entities(txt,labels,threshold=ENTITY_SCORE_FLOOR)
+    if not entities:
+        return 0
+    n_entities = len(entities)
+
+    return n_entities/n_tokens
+
+def filter_text_density_sematic(txt: str, model: GLiNER, labels: list[str], threshold_score: float,stopwords = False) -> bool: 
+    return compute_density_semantic(txt,model,labels,stopwords) >= threshold_score
+    
 
 def preprocess(txt_file_path: str | list[str],gliner_model_path:str) -> list[str]:
     model,labels,threshold_score = load_gliner_model(gliner_model_path)
@@ -82,7 +121,7 @@ def preprocess(txt_file_path: str | list[str],gliner_model_path:str) -> list[str
     
     for path in paths:
         cleaned_text = clean_text(load_txt_file(path))
-        if filter_text(cleaned_text,model,labels,threshold_score):
+        if filter_text_average_score(cleaned_text,model,labels,threshold_score) and filter_text_density_sematic(cleaned_text,model,labels,threshold_score):
             potential_text.append(cleaned_text)
     return potential_text
 
