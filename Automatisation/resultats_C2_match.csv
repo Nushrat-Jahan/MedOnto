@@ -1,0 +1,10 @@
+﻿Item ID,Item text,Concept (A2),Match,SNOMED ID,Preferred label,Justification
+phq2,"Feeling down, depressed, or hopeless",depression,Narrower,310495003,Mild depression,Mild depression is a specific case of the item's construct.
+phq4,Feeling tired or having little energy,fatigue,Exact,84229001,Fatigue,Tiredness or lack of energy aligns with the fatigue definition.
+phq7,"Trouble concentrating on things, such as reading the newspaper or watching television",attention_deficit,Narrower,31177006,"Attention deficit hyperactivity disorder, combined type",Cognitive deficit in attention is more specific to the item's construct.
+phq9,Thoughts that you would be better off dead or of hurting yourself in some way,suicidal ideation,Exact,6471006,Suicidal thoughts,Candidate matches the construct of suicidal thoughts.
+gad1,"Feeling nervous, anxious, or on edge",anxiety,Exact,48694002,Anxiety,Matches the feeling of anxiety as described in the item.
+gad4,Trouble relaxing,anxiety,No Match,,,"Item measures trouble relaxing, not anxiety disorders."
+gad6,Becoming easily annoyed or irritable,irritability,Exact,55929007,Feeling irritable,Feeling irritable matches the construct of irritability.
+epw4,As a passenger in a car for an hour without a break,daytime sleepiness,No Match,,,No candidate directly matches the specific sleepiness construct in this item.
+epw8,"In a car, while stopped for a few minutes in traffic",daytime sleepiness,No Match,,,No candidate directly matches the specific sleepiness construct in this item.

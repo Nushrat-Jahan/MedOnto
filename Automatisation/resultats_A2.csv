@@ -1,0 +1,10 @@
+﻿Source,Concept,Category,Relation,Evidence,SNOMED CT match,Status,Validation
+"PHQ-9 - phq2 : Feeling down, depressed, or hopeless",depression,symptom,,"This item directly assesses the experience of depression, a common symptom of depressive disorders.",,existing_concept,
+PHQ-9 - phq4 : Feeling tired or having little energy,fatigue,symptom,,"The item describes a subjective experience of tiredness or lack of energy, which is a common symptom of depression.",,existing_concept,
+"PHQ-9 - phq7 : Trouble concentrating on things, such as reading the newspaper or watching television",attention_deficit,symptom,,"The item assesses difficulty concentrating, which is a common symptom of depression.",,existing_concept,
+PHQ-9 - phq9 : Thoughts that you would be better off dead or of hurting yourself in some way,suicidal ideation,finding,is_a -> psychological finding,"The item asks about thoughts of self-harm, which is a specific type of suicidal ideation.",,existing_concept,
+"GAD-7 - gad1 : Feeling nervous, anxious, or on edge",anxiety,symptom,is_a -> anxiety,"The item directly assesses the experience of anxiety, a common symptom in anxiety disorders.",,existing_concept,
+GAD-7 - gad4 : Trouble relaxing,anxiety,symptom,,"The item assesses difficulty in relaxing, which is a common anxiety symptom.",,existing_concept,
+GAD-7 - gad6 : Becoming easily annoyed or irritable,irritability,symptom,is_a -> mood disturbance,"The item directly assesses irritability, a mood disturbance often reported in anxiety disorders.",,existing_concept,
+Epworth Sleepiness Scale - epw4 : As a passenger in a car for an hour without a break,daytime sleepiness,symptom,,"The item measures the likelihood of dozing off during a passive, non-stimulating activity, which is a direct assessment of daytime sleepiness.",,existing_concept,
+"Epworth Sleepiness Scale - epw8 : In a car, while stopped for a few minutes in traffic",daytime sleepiness,symptom,,"The item measures the likelihood of dozing off in a specific situation, which is a direct manifestation of daytime sleepiness.",,existing_concept,
