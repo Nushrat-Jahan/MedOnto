@@ -28,7 +28,7 @@ class SpanExtractionDataset(Dataset):
         tokenizer: AutoTokenizer,
         system_prompt: str,
         user_template: str,
-        max_length: int = 1024,
+        max_length: int = 100,
     ):
         prompts = [
             tokenizer.apply_chat_template(
@@ -70,10 +70,12 @@ def spanextraction(model_configs_path: str, documents: list[str]) -> list[list[T
     ]
     loaders = [DataLoader(dataset, batch_size=1) for dataset in datasets]
     results: list[list[Triplet]] = []
+    i = 0
     with torch.no_grad():
-        for loader in tqdm(loaders,desc = "Extracting Triplets"):
+        for loader in loaders: #Multithreading ??????????
+            i+=1
             file_triplets: list[Triplet] = []
-            for batch in loader:
+            for batch in tqdm(loader,desc = f"Extracting Triplets from {i} document"):
                 batch = {key: value.to(model.device) for key, value in batch.items()}
                 output = model.generate(**batch, max_new_tokens=1024, do_sample=False)
                 input_length = batch["input_ids"].shape[1]
