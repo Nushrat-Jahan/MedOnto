@@ -168,8 +168,7 @@ Plusieurs limites ont été observées lors des tests :
 
 * Le modèle **7B** ne suit pas toujours les consignes du prompt, notamment pour les items **Epworth**.
 * Un concept imprécis en **A2** peut empêcher BioPortal de retourner le bon candidat.
-* Augmenter `PAGESIZE` améliore le rappel, mais augmente également les erreurs de sélection.
-* Les items composites, notamment ceux de la forme **« A, B, or C »**, restent difficiles à traiter automatiquement.
+*Le LLM, met "no match", s'il ne trouve pas la même chose que le concept de QWEN sachant que des mots très proche et plus spécifique sont des candidats
 
 ---
 
