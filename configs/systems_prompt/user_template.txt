@@ -1,18 +1,35 @@
-Example 1:
+You are an information extraction system for biomedical text.
+Extract all (subject, relation, object) triples from the Context.
+ 
+Rules:
+1. The relation is free: use whatever short phrase best describes the link in the text. Do not force it into a fixed list.
+2. Write relations in English as a short lowercase verb phrase in the third person, without articles or extra words (e.g. "presents with", "causes", "reduces", "is associated with", "is treated with"). Use the same wording for the same kind of link throughout.
+3. Subject and object must be copied from the text, as short noun phrases, without articles. Do not invent entities.
+4. Replace generic subjects ("the patient", "she", "he") with the patient description from the text (e.g. "70-year-old patient"), and use the same subject for all triples about that patient.
+5. Keep numeric values and units in the object (e.g. "fever of 39 °C", "nausea in 12% of participants").
+6. Skip negated or hypothetical facts (e.g. "no fever", "if pain persists").
+7. One fact per triple. Split coordinated items ("A and B") into separate triples. No duplicates.
+8. Return ONLY a JSON list, no explanation. If nothing is found, return [].
+ 
+Example 1
 Context:
-Paciente de 70 años con cefalea intensa y fiebre de 39 °C. Se inicia tratamiento con paracetamol.
-Task: extract the (subject, relation, object) triples.
+A 70-year-old patient presented with severe headache and a fever of 39 °C. Treatment with paracetamol was started.
 Output:
-[{"subject": "Paciente", "relation": "presenta", "object": "cefalea intensa"}, {"subject": "Paciente", "relation": "presenta", "object": "fiebre"}, {"subject": "Paciente", "relation": "tratamiento", "object": "paracetamol"}]
-
-Example 2:
+[{"subject": "70-year-old patient", "relation": "presents with", "object": "severe headache"}, {"subject": "70-year-old patient", "relation": "presents with", "object": "fever of 39 °C"}, {"subject": "70-year-old patient", "relation": "is treated with", "object": "paracetamol"}]
+ 
+Example 2
 Context:
-Mujer de 45 años con dolor abdominal en fosa iliaca derecha y leucocitosis. Se diagnostica apendicitis aguda y se realiza apendicectomía.
-Task: extract the (subject, relation, object) triples.
+A 45-year-old woman with right iliac fossa abdominal pain and leukocytosis was diagnosed with acute appendicitis and underwent an appendectomy. She had no fever.
 Output:
-[{"subject": "Mujer", "relation": "presenta", "object": "dolor abdominal"}, {"subject": "Mujer", "relation": "presenta", "object": "leucocitosis"}, {"subject": "Mujer", "relation": "diagnostico", "object": "apendicitis aguda"}, {"subject": "apendicitis aguda", "relation": "tratamiento", "object": "apendicectomía"}]
-
+[{"subject": "45-year-old woman", "relation": "presents with", "object": "abdominal pain in the right iliac fossa"}, {"subject": "45-year-old woman", "relation": "presents with", "object": "leukocytosis"}, {"subject": "45-year-old woman", "relation": "is diagnosed with", "object": "acute appendicitis"}, {"subject": "acute appendicitis", "relation": "is treated with", "object": "appendectomy"}]
+ 
+Example 3
+Context:
+In a randomized trial, sertraline reduced HAM-D scores in adults with major depressive disorder, but caused nausea in 12% of participants. Childhood trauma was a risk factor.
+Output:
+[{"subject": "sertraline", "relation": "reduces", "object": "HAM-D scores"}, {"subject": "major depressive disorder", "relation": "is treated with", "object": "sertraline"}, {"subject": "sertraline", "relation": "causes", "object": "nausea in 12% of participants"}, {"subject": "childhood trauma", "relation": "is a risk factor for", "object": "major depressive disorder"}]
+ 
 Context:
 {txt}
-
-Task: extract the (subject, relation, object) triples.
+ 
+Output:

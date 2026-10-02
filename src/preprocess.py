@@ -2,7 +2,7 @@ import re
 import unicodedata
 from typing import Any
 from gliner import GLiNER
-from src.utils import load_txt_file,load_toml_file
+from src.utils import load_txt_file,load_toml_file,load_pdf_file
 
 try:
     from nltk.corpus import stopwords
@@ -32,7 +32,8 @@ THRESHOLD_DENSITY_DEFAULT = 0.05
 THRESHOLD_SCORE_DEFAULT = 0.15
 ENTITY_SCORE_FLOOR = 0.1
 
-
+def is_pdf(path:str) -> bool: 
+    return path.split(".")[-1] == "pdf" 
 
 def _fix_mojibake(text: str) -> str:
     if not any(marker in text for marker in _MOJIBAKE_MARKERS):
@@ -107,11 +108,17 @@ def compute_density_semantic(txt:str,model:GLiNER,labels:list[str],stopwords = F
 
     return n_entities/n_tokens
 
-def filter_text_density_sematic(txt: str, model: GLiNER, labels: list[str], threshold_score: float,stopwords = False) -> bool: 
+def filter_text_density_sematic(txt: str, model: GLiNER, labels: list[str], 
+                                threshold_score: float,stopwords = False) -> bool: 
     return compute_density_semantic(txt,model,labels,stopwords) >= threshold_score
     
 
-def preprocess(txt_file_path: str | list[str],gliner_model_path:str) -> list[str]:
+def filter(txt: str, model: GLiNER, labels: list[str],
+           threshold_score,stopwords = False) -> bool:
+    return (filter_text_average_score(txt,model,labels,threshold_score) and filter_text_density_sematic(txt,model,labels,threshold_score,stopwords))
+
+
+def preprocess(txt_file_path: str | list[str],gliner_model_path:str,not_filtering:bool,stopwords:bool) -> list[str]:
     model,labels,threshold_score = load_gliner_model(gliner_model_path)
     if isinstance(txt_file_path, str):
         paths: list[str] = [txt_file_path]
@@ -120,12 +127,16 @@ def preprocess(txt_file_path: str | list[str],gliner_model_path:str) -> list[str
     potential_text:list[str] = []
     
     for path in paths:
-        cleaned_text = clean_text(load_txt_file(path))
-        if filter_text_average_score(cleaned_text,model,labels,threshold_score) and filter_text_density_sematic(cleaned_text,model,labels,threshold_score):
+        if is_pdf(path):
+            text = load_pdf_file(path)
+        else:
+            text = load_txt_file(path)
+        cleaned_text = clean_text(text)
+
+        if filter(cleaned_text,model,labels,threshold_score,stopwords) or not_filtering:
             potential_text.append(cleaned_text)
     return potential_text
 
 
 if __name__ == "__main__":
-    for cleaned in preprocess("text/test.txt","configs/models/gliner-qwen-0.5B-v1.0.toml"):
-        print(cleaned)
+    print(clean_text(load_pdf_file("text/depression.pdf")))
