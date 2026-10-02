@@ -6,7 +6,7 @@ if TYPE_CHECKING:
 import json
 import re
 import tomllib
-
+from pypdf import PdfReader
 
 
 
@@ -15,6 +15,13 @@ def load_txt_file(text_path:str) -> str:
         text:str = f.read()
 
     return text 
+
+def load_pdf_file(text_path:str) -> str: 
+    reader = PdfReader(text_path)
+    return "\n".join(
+        page.extract_text() or ""
+        for page in reader.pages
+    )
 
 
 
