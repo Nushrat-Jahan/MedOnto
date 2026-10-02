@@ -1,19 +1,14 @@
 """
 
 Extraction de concepts cliniques à partir des 9 items (PHQ-9, GAD-7, ESS)
-via Qwen2.5-7B-Instruct (Ollama en local).
+via Qwen2.5-7B-Instruct.
 
 Copie de extraction_qwen_version2.py : mêmes ITEMS, même prompt système,
 mêmes contrôles (check_result), mêmes colonnes CSV. Adaptations :
   - exécution parallèle des items (ThreadPoolExecutor, 3 workers),
   - sorties renommées : resultats_A2.csv / resultats_A2.json,
   - resultats_A2.json enrichi des champs d'item (questionnaire, question,
-    response_type, scale) pour alimenter les étapes B2/C2/D2/E2.
-
-Aucun fichier existant n'est modifié.
-
-Prérequis : pip install ollama --break-system-packages
-            ollama doit tourner en arrière-plan (qwen2.5:7b-instruct)
+    response_type, scale)
 """
 
 import json
@@ -67,7 +62,7 @@ CATEGORIES = {"finding", "symptom", "disorder", "behavior", "observable_entity",
 PREDICATES = {"is_a", "has_associated_finding", "has_interpretation", "measures", "is_manifestation_of"}
 STATUSES = {"existing_concept", "candidate_project_concept"}
 
-# --- Prompt d'extraction : IDENTIQUE à extraction_qwen_version2.py (v3) ---
+# --- Prompt d'extraction : IDENTIQUE à extraction_qwen_version2.py ---
 SYSTEM_PROMPT = """You are a clinical terminology assistant specialized in mapping psychometric
 questionnaire items to standardized biomedical concepts (SNOMED CT semantics).
 You do not have live access to a SNOMED CT database. You must NOT invent SNOMED CT codes.
