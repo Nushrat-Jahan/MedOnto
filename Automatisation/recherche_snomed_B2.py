@@ -3,7 +3,7 @@
 
 Pour chaque concept proposé par A2 (resultats_A2.json), interroge l'API
 BioPortal (https://data.bioontology.org/search, ontologie SNOMEDCT) et
-conserve 3 à 5 candidats par item :
+conserve 10 candidats par item :
   - ID SNOMED (extrait de l'URI "@id" du concept dans la réponse API),
   - label préféré (prefLabel),
   - définition (definition, si présente),
@@ -13,10 +13,8 @@ AUCUN LLM n'intervient à cette étape : toute valeur SNOMED (ID, label,
 définition, synonyme) provient directement de la réponse de l'API BioPortal.
 
 
-Clé API : variable d'environnement BIOPORTAL_API_KEY, jamais écrite dans
-le code ni dans les sorties.
-
-Sortie : resultats_B2_candidats.csv (une ligne par candidat, 3-5 par item).
+Clé API : variable d'environnement BIOPORTAL_API_KEY
+Sortie : resultats_B2_candidats.csv (une ligne par candidat)
 """
 
 import csv
