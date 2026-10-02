@@ -26,8 +26,6 @@ Contrôles :
     validation. Le script échoue explicitement dans ce cas plutôt que de
     laisser une fusion silencieuse se produire.
 
-Ce script n'écrit JAMAIS dans fragment_ontologies_version2.ttl ni dans
-tout autre fichier existant.
 """
 
 import csv
