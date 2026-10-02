@@ -121,3 +121,6 @@ def make_dict_from_triplets(triplet:Triplet) -> dict[str,str]:
 def make_json_from_triplets(triplets:list[Triplet]): 
     return [make_dict_from_triplets(triplet) for triplet in triplets]
 
+def load_json_file(json_path: str):
+    with open(json_path, "r", encoding="utf-8") as f:
+        return json.load(f)

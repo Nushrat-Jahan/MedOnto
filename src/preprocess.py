@@ -66,6 +66,9 @@ def clean_text(text: str) -> str:
     text = _normalize_whitespace(text)
     return text
 
+def predict_entites(txt:str,model:GLiNER,labels:list[str],threshold = ENTITY_SCORE_FLOOR) -> list[dict[str|float]]:
+    return model.predict_entities(txt,labels,threshold=ENTITY_SCORE_FLOOR)
+
 def load_gliner_model(gliner_model_path:str) -> tuple[GLiNER,list[str],float]:
     gliner_model_configs:dict[str,Any] = load_toml_file(gliner_model_path)
     model = GLiNER.from_pretrained(gliner_model_configs.get("model_id","knowledgator/gliner-qwen-0.5B-v1.0"))
@@ -74,16 +77,13 @@ def load_gliner_model(gliner_model_path:str) -> tuple[GLiNER,list[str],float]:
 
     return model,labels,threshold_score
 
-def compute_average_sematic_score(txt:str,model:GLiNER,labels:list[str])  -> float: 
-    if not txt.strip():
-        return 0
-    entities:list[dict[str,str|float]] = model.predict_entities(txt,labels,threshold=ENTITY_SCORE_FLOOR)
+def compute_average_sematic_score(entities: list[dict[str,str|float]])  -> float: 
     if not entities:
         return 0
     return (sum(entitie["score"] for entitie in entities)/len(entities))
 
-def filter_text_average_score(txt: str, model: GLiNER, labels: list[str], threshold_score: float) -> bool:
-    return compute_average_sematic_score(txt, model, labels) >= threshold_score
+def filter_text_average_score(entities: list[dict[str,str|float]], threshold_score: float) -> bool:
+    return compute_average_sematic_score(entities) >= threshold_score
 
 
 def eliminate_stopwords(txt:str) -> list[str]: 
@@ -93,29 +93,24 @@ def eliminate_stopwords(txt:str) -> list[str]:
         if token.lower() not in STOPWORDS
     ]
 
-def compute_density_semantic(txt:str,model:GLiNER,labels:list[str],stopwords = False) -> float: 
-    if not txt.strip():
-        return 0
-    
+def compute_density_semantic(entities:list[dict[str,str|float]],txt:str,stopwords = False) -> float: 
     if stopwords:
         n_tokens = len(eliminate_stopwords(txt))
     else:
         n_tokens = len(txt.split())
-    entities:list[dict[str,str|float]] = model.predict_entities(txt,labels,threshold=ENTITY_SCORE_FLOOR)
     if not entities:
         return 0
     n_entities = len(entities)
 
     return n_entities/n_tokens
 
-def filter_text_density_sematic(txt: str, model: GLiNER, labels: list[str], 
-                                threshold_score: float,stopwords = False) -> bool: 
-    return compute_density_semantic(txt,model,labels,stopwords) >= threshold_score
+def filter_text_density_sematic(entities:list[dict[str,str|float]],txt:str,threshold_score: float,stopwords = False) -> bool: 
+    return compute_density_semantic(entities,txt,stopwords) >= threshold_score
     
 
-def filter(txt: str, model: GLiNER, labels: list[str],
-           threshold_score,stopwords = False) -> bool:
-    return (filter_text_average_score(txt,model,labels,threshold_score) and filter_text_density_sematic(txt,model,labels,threshold_score,stopwords))
+def filter(entities:list[dict[str,str|float]],txt:str,threshold_score: float,stopwords = False) -> bool:
+    
+    return (filter_text_average_score(entities,threshold_score) and filter_text_density_sematic(entities,txt,threshold_score,stopwords))
 
 
 def preprocess(txt_file_path: str | list[str],gliner_model_path:str,not_filtering:bool,stopwords:bool) -> list[str]:
@@ -132,8 +127,8 @@ def preprocess(txt_file_path: str | list[str],gliner_model_path:str,not_filterin
         else:
             text = load_txt_file(path)
         cleaned_text = clean_text(text)
-
-        if filter(cleaned_text,model,labels,threshold_score,stopwords) or not_filtering:
+        entities = predict_entites(text,model,labels,threshold_score)
+        if filter(entities,text,threshold_score,stopwords) or not_filtering:
             potential_text.append(cleaned_text)
     return potential_text
 
