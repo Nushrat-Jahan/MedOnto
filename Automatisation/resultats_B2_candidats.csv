@@ -1,91 +1,91 @@
-﻿Item ID,Concept (A2),Rang,SNOMED ID,Preferred label,Definition,Synonyms
-phq2,depression,1,79842004,Stuporous depression,,Stuporous depression (disorder)
-phq2,depression,2,171207006,Depression screening,,Depression screening (procedure)
-phq2,depression,3,231500002,Masked depression,,Masked depression (disorder)
-phq2,depression,4,84788008,Menopausal depression,,Menopausal depression (disorder)
-phq2,depression,5,83458005,Agitated depression,,Agitated depression (disorder)
-phq2,depression,6,82218004,Postoperative depression,,Postoperative depression (disorder)
-phq2,depression,7,310495003,Mild depression,,Mild depression (disorder)
-phq2,depression,8,310496002,Moderate depression,,Moderate depression (disorder)
-phq2,depression,9,310497006,Severe depression,,Severe depression (disorder)
-phq2,depression,10,58703003,Postpartum depression,,Puerperal depression; Postpartum depression (disorder)
-phq4,fatigue,1,84229001,Fatigue,"Fatigue refers to a lack of energy, and it may be either acute or chronic. Fatigue may result from exertion, stress, and a wide variety of underlying medical conditions, including infections, malignancies, autoimmune disorders, anxiety, and depression. It may also be an adverse effect of medical treatments such as chemotherapy. Depending on the underlying cause, fatigue may or may not be relieved by rest.",Weariness; Fatigue (finding)
-phq4,fatigue,2,444042007,Postexertional fatigue,,Excessive postexertional fatigue; Excessive postexertional fatigue (finding)
-phq4,fatigue,3,8614008,Vocal fatigue,,Weakness of voice; Voice fatigue; Decreased vocal loudness
-phq4,fatigue,4,80449002,Muscle fatigue,,Muscle fatigue (finding); Muscles tire easily; Muscle tiredness
-phq4,fatigue,5,313328009,Accommodative fatigue,,Accommodative fatigue (disorder)
-phq4,fatigue,6,442099003,Psychogenic fatigue,,Psychogenic fatigue (disorder)
-phq4,fatigue,7,61157009,Combat fatigue,,Combat fatigue (disorder)
-phq4,fatigue,8,22171002,Neuromuscular fatigue,,"Neuromuscular fatigue, function (observable entity); Neuromuscular fatigue, function"
-phq4,fatigue,9,1141720008,No fatigue,,No fatigue (situation)
-phq4,fatigue,10,271795006,Malaise and fatigue,,Malaise and fatigue (finding)
-phq7,attention_deficit,1,23148009,Undifferentiated attention deficit disorder,,Undifferentiated attention deficit disorder (disorder)
-phq7,attention_deficit,2,406506008,Attention deficit hyperactivity disorder,,Minimal brain dysfunction; Hyperkinetic disorder; Attention deficit hyperkinetic disorder
-phq7,attention_deficit,3,142261000119100,Cognitive deficit in attention,,Cognitive deficit in attention (finding)
-phq7,attention_deficit,4,192127007,Child attention deficit disorder,,Child attention deficit disorder (disorder)
-phq7,attention_deficit,5,444613000,Adult attention deficit hyperactivity disorder,,Adult attention deficit disorder; Adult attention deficit hyperactivity disorder (disorder)
-phq7,attention_deficit,6,92841000087107,Attention deficit hyperactivity disorder suspected,,Suspected ADHD (attention deficit hyperactivity disorder); Attention deficit hyperactivity disorder suspected (situation)
-phq7,attention_deficit,7,31177006,"Attention deficit hyperactivity disorder, combined type",,"Attention deficit hyperactivity disorder combined; Attention deficit hyperactivity disorder, combined type (disorder); Attention deficit hyperactivity disorder combined type"
-phq7,attention_deficit,8,28271000087107,History of attention deficit hyperactivity disorder,,History of ADHD (attention deficit hyperactivity disorder); History of attention deficit hyperactivity disorder (situation)
-phq7,attention_deficit,9,35253001,"Attention deficit hyperactivity disorder, predominantly inattentive type",,"Attention deficit hyperactivity disorder, predominantly inattentive type (disorder); Attention deficit disorder without hyperactivity; ADD - Attention deficit disorder without hyperactivity"
-phq7,attention_deficit,10,702538008,Drug therapy for attention deficit hyperactivity disorder,,Drug therapy for ADHD (attention deficit hyperactivity disorder); Drug therapy for attention deficit hyperactivity disorder (procedure)
-phq9,suicidal ideation,1,460881000124101,No history of suicidal ideation,,No history of suicidal thoughts; No history of suicidal ideation (situation); No history of thoughts of suicide
-phq9,suicidal ideation,2,267073005,Suicidal,,Suicidal (finding)
-phq9,suicidal ideation,3,86849004,Suicidal poisoning,,Suicidal poisoning (disorder)
-phq9,suicidal ideation,4,304594002,Suicidal intent,,Suicidal intent (finding)
-phq9,suicidal ideation,5,425104003,Suicidal behavior,,Suicidal behavior (finding); Suicidal behaviour
-phq9,suicidal ideation,6,6471006,Suicidal thoughts,,Suicidal ideation; Suicidal thoughts (finding)
-phq9,suicidal ideation,7,225457007,Feeling suicidal,,Feeling suicidal (finding)
-phq9,suicidal ideation,8,417233008,Paranoid ideation,,Paranoid ideation (finding)
-phq9,suicidal ideation,9,247621002,Expansive ideation,,Expansive ideation (finding)
-phq9,suicidal ideation,10,134420004,No suicidal thoughts,,No suicidal thoughts (situation)
-gad1,anxiety,1,48694002,Anxiety,,Anxiousness; Anxiety (finding); Anxiety reaction
-gad1,anxiety,2,35429005,Anticipatory anxiety,,Anticipatory anxiety (finding)
-gad1,anxiety,3,300894000,Parental anxiety,,Anxious parents; Parental anxiety (finding)
-gad1,anxiety,4,300895004,Anxiety attack,,Anxiety attack (finding)
-gad1,anxiety,5,313087008,Anxiety counseling,,Anxiety counselling; Counselling for anxiety; Counseling for anxiety (procedure)
-gad1,anxiety,6,279622009,Performance anxiety,,Performance anxiety (finding)
-gad1,anxiety,7,69479009,Anxiety hyperventilation,,Anxiety hyperventilation (disorder)
-gad1,anxiety,8,126943008,Separation anxiety,,Separation anxiety (disorder)
-gad1,anxiety,9,191708009,Chronic anxiety,,Chronic anxiety (finding)
-gad1,anxiety,10,191709001,Recurrent anxiety,,Recurrent anxiety (finding)
-gad4,anxiety,1,48694002,Anxiety,,Anxiousness; Anxiety (finding); Anxiety reaction
-gad4,anxiety,2,35429005,Anticipatory anxiety,,Anticipatory anxiety (finding)
-gad4,anxiety,3,300894000,Parental anxiety,,Anxious parents; Parental anxiety (finding)
-gad4,anxiety,4,300895004,Anxiety attack,,Anxiety attack (finding)
-gad4,anxiety,5,313087008,Anxiety counseling,,Anxiety counselling; Counselling for anxiety; Counseling for anxiety (procedure)
-gad4,anxiety,6,279622009,Performance anxiety,,Performance anxiety (finding)
-gad4,anxiety,7,69479009,Anxiety hyperventilation,,Anxiety hyperventilation (disorder)
-gad4,anxiety,8,126943008,Separation anxiety,,Separation anxiety (disorder)
-gad4,anxiety,9,191708009,Chronic anxiety,,Chronic anxiety (finding)
-gad4,anxiety,10,191709001,Recurrent anxiety,,Recurrent anxiety (finding)
-gad6,irritability,1,844583007,Irritability postvaccinal,,Irritability after vaccination (finding); Irritability after vaccination
-gad6,irritability,2,271697007,Muscle irritability,,Muscle irritability (finding)
-gad6,irritability,3,52980004,Uterine irritability,,"Uterine irritability, function (observable entity); Uterine irritability, function"
-gad6,irritability,4,274646000,Irritability and anger,,Irritability and anger (finding)
-gad6,irritability,5,55929007,Feeling irritable,,Feeling irritable (finding); Fussiness; Irritability
-gad6,irritability,6,404220000,Irritability of urinary bladder,,Irritability of urinary bladder (finding); Bladder irritability; Irritable bladder
-gad6,irritability,7,4952001,Cerebral irritability in newborn,,Cerebral irritability in newborn (disorder)
-gad6,irritability,8,161584002,History of perinatal cerebral irritability,,History of perinatal cerebral irritability (situation)
-gad6,irritability,9,724735003,Oppositional defiant disorder without chronic irritability-anger,,Oppositional defiant disorder without chronic irritability-anger (disorder)
-gad6,irritability,10,724733005,Oppositional defiant disorder co-occurrent with chronic irritability-anger,,Oppositional defiant disorder co-occurrent with chronic irritability-anger (disorder); Oppositional defiant disorder with chronic irritability-anger
-epw4,daytime sleepiness,1,1367959007,Excessive daytime sleepiness,,Excessive daytime sleepiness (finding)
-epw4,daytime sleepiness,2,230491004,Postviral excessive daytime sleepiness,,Postviral excessive daytime sleepiness (disorder)
-epw4,daytime sleepiness,3,230489007,Excessive daytime sleepiness - normal night sleep,,Excessive daytime sleepiness - normal night sleep (disorder)
-epw4,daytime sleepiness,4,230492006,Excessive daytime sleepiness with sleep paralysis,,Excessive daytime sleepiness with sleep paralysis (disorder)
-epw4,daytime sleepiness,5,28017001,Daytime,,Daytime (qualifier value); Diurnal
-epw4,daytime sleepiness,6,141000119100,Daytime somnolence,,Daytime somnolence (finding)
-epw4,daytime sleepiness,7,31771000119102,Daytime hypersomnia,,Daytime hypersomnia (disorder)
-epw4,daytime sleepiness,8,281862002,Daytime enuresis,,Daytime wetting; Daytime enuresis (finding)
-epw4,daytime sleepiness,9,708735004,Epworth Sleepiness Scale,,Epworth Sleepiness Scale (assessment scale); ESS - Epworth Sleepiness Scale
-epw4,daytime sleepiness,10,373899003,Asthma daytime symptoms,,Asthma daytime symptoms (finding)
-epw8,daytime sleepiness,1,1367959007,Excessive daytime sleepiness,,Excessive daytime sleepiness (finding)
-epw8,daytime sleepiness,2,230491004,Postviral excessive daytime sleepiness,,Postviral excessive daytime sleepiness (disorder)
-epw8,daytime sleepiness,3,230489007,Excessive daytime sleepiness - normal night sleep,,Excessive daytime sleepiness - normal night sleep (disorder)
-epw8,daytime sleepiness,4,230492006,Excessive daytime sleepiness with sleep paralysis,,Excessive daytime sleepiness with sleep paralysis (disorder)
-epw8,daytime sleepiness,5,28017001,Daytime,,Daytime (qualifier value); Diurnal
-epw8,daytime sleepiness,6,141000119100,Daytime somnolence,,Daytime somnolence (finding)
-epw8,daytime sleepiness,7,31771000119102,Daytime hypersomnia,,Daytime hypersomnia (disorder)
-epw8,daytime sleepiness,8,281862002,Daytime enuresis,,Daytime wetting; Daytime enuresis (finding)
-epw8,daytime sleepiness,9,708735004,Epworth Sleepiness Scale,,Epworth Sleepiness Scale (assessment scale); ESS - Epworth Sleepiness Scale
-epw8,daytime sleepiness,10,373899003,Asthma daytime symptoms,,Asthma daytime symptoms (finding)
+﻿Item ID,Concept (A2),Rang,Snomed ID,Preferred label,Definition,Synonyms,,
+phq2,depression,1,79842004,Stuporous depression,,Stuporous depression (disorder),,
+phq2,depression,2,171207006,Depression screening,,Depression screening (procedure),,
+phq2,depression,3,231500002,Masked depression,,Masked depression (disorder),,
+phq2,depression,4,84788008,Menopausal depression,,Menopausal depression (disorder),,
+phq2,depression,5,83458005,Agitated depression,,Agitated depression (disorder),,
+phq2,depression,6,82218004,Postoperative depression,,Postoperative depression (disorder),,
+phq2,depression,7,310495003,Mild depression,,Mild depression (disorder),,
+phq2,depression,8,310496002,Moderate depression,,Moderate depression (disorder),,
+phq2,depression,9,310497006,Severe depression,,Severe depression (disorder),,
+phq2,depression,10,58703003,Postpartum depression,,Puerperal depression, Postpartum depression (disorder),
+phq4,fatigue,1,84229001,Fatigue,"Fatigue refers to a lack of energy, and it may be either acute or chronic. Fatigue may result from exertion, stress, and a wide variety of underlying medical conditions, including infections, malignancies, autoimmune disorders, anxiety, and depression. It may also be an adverse effect of medical treatments such as chemotherapy. Depending on the underlying cause, fatigue may or may not be relieved by rest.",Weariness, Fatigue (finding),
+phq4,fatigue,2,444042007,Postexertional fatigue,,Excessive postexertional fatigue, Excessive postexertional fatigue (finding),
+phq4,fatigue,3,8614008,Vocal fatigue,,Weakness of voice, Voice fatigue, Decreased vocal loudness
+phq4,fatigue,4,80449002,Muscle fatigue,,Muscle fatigue (finding), Muscles tire easily, Muscle tiredness
+phq4,fatigue,5,313328009,Accommodative fatigue,,Accommodative fatigue (disorder),,
+phq4,fatigue,6,442099003,Psychogenic fatigue,,Psychogenic fatigue (disorder),,
+phq4,fatigue,7,61157009,Combat fatigue,,Combat fatigue (disorder),,
+phq4,fatigue,8,22171002,Neuromuscular fatigue,,"Neuromuscular fatigue, function (observable entity); Neuromuscular fatigue, function",,
+phq4,fatigue,9,1141720008,No fatigue,,No fatigue (situation),,
+phq4,fatigue,10,271795006,Malaise and fatigue,,Malaise and fatigue (finding),,
+phq7,attention_deficit,1,23148009,Undifferentiated attention deficit disorder,,Undifferentiated attention deficit disorder (disorder),,
+phq7,attention_deficit,2,406506008,Attention deficit hyperactivity disorder,,Minimal brain dysfunction, Hyperkinetic disorder, Attention deficit hyperkinetic disorder
+phq7,attention_deficit,3,142261000119100,Cognitive deficit in attention,,Cognitive deficit in attention (finding),,
+phq7,attention_deficit,4,192127007,Child attention deficit disorder,,Child attention deficit disorder (disorder),,
+phq7,attention_deficit,5,444613000,Adult attention deficit hyperactivity disorder,,Adult attention deficit disorder, Adult attention deficit hyperactivity disorder (disorder),
+phq7,attention_deficit,6,92841000087107,Attention deficit hyperactivity disorder suspected,,Suspected ADHD (attention deficit hyperactivity disorder), Attention deficit hyperactivity disorder suspected (situation),
+phq7,attention_deficit,7,31177006,"Attention deficit hyperactivity disorder, combined type",,"Attention deficit hyperactivity disorder combined; Attention deficit hyperactivity disorder, combined type (disorder); Attention deficit hyperactivity disorder combined type",,
+phq7,attention_deficit,8,28271000087107,History of attention deficit hyperactivity disorder,,History of ADHD (attention deficit hyperactivity disorder), History of attention deficit hyperactivity disorder (situation),
+phq7,attention_deficit,9,35253001,"Attention deficit hyperactivity disorder, predominantly inattentive type",,"Attention deficit hyperactivity disorder, predominantly inattentive type (disorder); Attention deficit disorder without hyperactivity; ADD - Attention deficit disorder without hyperactivity",,
+phq7,attention_deficit,10,702538008,Drug therapy for attention deficit hyperactivity disorder,,Drug therapy for ADHD (attention deficit hyperactivity disorder), Drug therapy for attention deficit hyperactivity disorder (procedure),
+phq9,suicidal ideation,1,460881000124101,No history of suicidal ideation,,No history of suicidal thoughts, No history of suicidal ideation (situation), No history of thoughts of suicide
+phq9,suicidal ideation,2,267073005,Suicidal,,Suicidal (finding),,
+phq9,suicidal ideation,3,86849004,Suicidal poisoning,,Suicidal poisoning (disorder),,
+phq9,suicidal ideation,4,304594002,Suicidal intent,,Suicidal intent (finding),,
+phq9,suicidal ideation,5,425104003,Suicidal behavior,,Suicidal behavior (finding), Suicidal behaviour,
+phq9,suicidal ideation,6,6471006,Suicidal thoughts,,Suicidal ideation, Suicidal thoughts (finding),
+phq9,suicidal ideation,7,225457007,Feeling suicidal,,Feeling suicidal (finding),,
+phq9,suicidal ideation,8,417233008,Paranoid ideation,,Paranoid ideation (finding),,
+phq9,suicidal ideation,9,247621002,Expansive ideation,,Expansive ideation (finding),,
+phq9,suicidal ideation,10,134420004,No suicidal thoughts,,No suicidal thoughts (situation),,
+gad1,anxiety,1,48694002,Anxiety,,Anxiousness, Anxiety (finding), Anxiety reaction
+gad1,anxiety,2,35429005,Anticipatory anxiety,,Anticipatory anxiety (finding),,
+gad1,anxiety,3,300894000,Parental anxiety,,Anxious parents, Parental anxiety (finding),
+gad1,anxiety,4,300895004,Anxiety attack,,Anxiety attack (finding),,
+gad1,anxiety,5,313087008,Anxiety counseling,,Anxiety counselling, Counselling for anxiety, Counseling for anxiety (procedure)
+gad1,anxiety,6,279622009,Performance anxiety,,Performance anxiety (finding),,
+gad1,anxiety,7,69479009,Anxiety hyperventilation,,Anxiety hyperventilation (disorder),,
+gad1,anxiety,8,126943008,Separation anxiety,,Separation anxiety (disorder),,
+gad1,anxiety,9,191708009,Chronic anxiety,,Chronic anxiety (finding),,
+gad1,anxiety,10,191709001,Recurrent anxiety,,Recurrent anxiety (finding),,
+gad4,anxiety,1,48694002,Anxiety,,Anxiousness, Anxiety (finding), Anxiety reaction
+gad4,anxiety,2,35429005,Anticipatory anxiety,,Anticipatory anxiety (finding),,
+gad4,anxiety,3,300894000,Parental anxiety,,Anxious parents, Parental anxiety (finding),
+gad4,anxiety,4,300895004,Anxiety attack,,Anxiety attack (finding),,
+gad4,anxiety,5,313087008,Anxiety counseling,,Anxiety counselling, Counselling for anxiety, Counseling for anxiety (procedure)
+gad4,anxiety,6,279622009,Performance anxiety,,Performance anxiety (finding),,
+gad4,anxiety,7,69479009,Anxiety hyperventilation,,Anxiety hyperventilation (disorder),,
+gad4,anxiety,8,126943008,Separation anxiety,,Separation anxiety (disorder),,
+gad4,anxiety,9,191708009,Chronic anxiety,,Chronic anxiety (finding),,
+gad4,anxiety,10,191709001,Recurrent anxiety,,Recurrent anxiety (finding),,
+gad6,irritability,1,844583007,Irritability postvaccinal,,Irritability after vaccination (finding), Irritability after vaccination,
+gad6,irritability,2,271697007,Muscle irritability,,Muscle irritability (finding),,
+gad6,irritability,3,52980004,Uterine irritability,,"Uterine irritability, function (observable entity); Uterine irritability, function",,
+gad6,irritability,4,274646000,Irritability and anger,,Irritability and anger (finding),,
+gad6,irritability,5,55929007,Feeling irritable,,Feeling irritable (finding), Fussiness, Irritability
+gad6,irritability,6,404220000,Irritability of urinary bladder,,Irritability of urinary bladder (finding), Bladder irritability, Irritable bladder
+gad6,irritability,7,4952001,Cerebral irritability in newborn,,Cerebral irritability in newborn (disorder),,
+gad6,irritability,8,161584002,History of perinatal cerebral irritability,,History of perinatal cerebral irritability (situation),,
+gad6,irritability,9,724735003,Oppositional defiant disorder without chronic irritability-anger,,Oppositional defiant disorder without chronic irritability-anger (disorder),,
+gad6,irritability,10,724733005,Oppositional defiant disorder co-occurrent with chronic irritability-anger,,Oppositional defiant disorder co-occurrent with chronic irritability-anger (disorder), Oppositional defiant disorder with chronic irritability-anger,
+epw4,daytime sleepiness,1,1367959007,Excessive daytime sleepiness,,Excessive daytime sleepiness (finding),,
+epw4,daytime sleepiness,2,230491004,Postviral excessive daytime sleepiness,,Postviral excessive daytime sleepiness (disorder),,
+epw4,daytime sleepiness,3,230489007,Excessive daytime sleepiness - normal night sleep,,Excessive daytime sleepiness - normal night sleep (disorder),,
+epw4,daytime sleepiness,4,230492006,Excessive daytime sleepiness with sleep paralysis,,Excessive daytime sleepiness with sleep paralysis (disorder),,
+epw4,daytime sleepiness,5,28017001,Daytime,,Daytime (qualifier value), Diurnal,
+epw4,daytime sleepiness,6,141000119100,Daytime somnolence,,Daytime somnolence (finding),,
+epw4,daytime sleepiness,7,31771000119102,Daytime hypersomnia,,Daytime hypersomnia (disorder),,
+epw4,daytime sleepiness,8,281862002,Daytime enuresis,,Daytime wetting, Daytime enuresis (finding),
+epw4,daytime sleepiness,9,708735004,Epworth Sleepiness Scale,,Epworth Sleepiness Scale (assessment scale), ESS - Epworth Sleepiness Scale,
+epw4,daytime sleepiness,10,373899003,Asthma daytime symptoms,,Asthma daytime symptoms (finding),,
+epw8,daytime sleepiness,1,1367959007,Excessive daytime sleepiness,,Excessive daytime sleepiness (finding),,
+epw8,daytime sleepiness,2,230491004,Postviral excessive daytime sleepiness,,Postviral excessive daytime sleepiness (disorder),,
+epw8,daytime sleepiness,3,230489007,Excessive daytime sleepiness - normal night sleep,,Excessive daytime sleepiness - normal night sleep (disorder),,
+epw8,daytime sleepiness,4,230492006,Excessive daytime sleepiness with sleep paralysis,,Excessive daytime sleepiness with sleep paralysis (disorder),,
+epw8,daytime sleepiness,5,28017001,Daytime,,Daytime (qualifier value), Diurnal,
+epw8,daytime sleepiness,6,141000119100,Daytime somnolence,,Daytime somnolence (finding),,
+epw8,daytime sleepiness,7,31771000119102,Daytime hypersomnia,,Daytime hypersomnia (disorder),,
+epw8,daytime sleepiness,8,281862002,Daytime enuresis,,Daytime wetting, Daytime enuresis (finding),
+epw8,daytime sleepiness,9,708735004,Epworth Sleepiness Scale,,Epworth Sleepiness Scale (assessment scale), ESS - Epworth Sleepiness Scale,
+epw8,daytime sleepiness,10,373899003,Asthma daytime symptoms,,Asthma daytime symptoms (finding),,
