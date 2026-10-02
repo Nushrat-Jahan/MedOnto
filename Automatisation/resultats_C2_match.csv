@@ -1,4 +1,4 @@
-﻿Item ID,Item text,Concept (A2),Match,SNOMED ID,Preferred label,Justification
+﻿Item ID,Item text,Concept (A2),Match,Snomed ID,Preferred label,Justification
 phq2,"Feeling down, depressed, or hopeless",depression,Narrower,310495003,Mild depression,Mild depression is a specific case of the item's construct.
 phq4,Feeling tired or having little energy,fatigue,Exact,84229001,Fatigue,Tiredness or lack of energy aligns with the fatigue definition.
 phq7,"Trouble concentrating on things, such as reading the newspaper or watching television",attention_deficit,Narrower,31177006,"Attention deficit hyperactivity disorder, combined type",Cognitive deficit in attention is more specific to the item's construct.
