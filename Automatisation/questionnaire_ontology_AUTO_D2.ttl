@@ -1,5 +1,5 @@
 # Généré automatiquement par le pipeline A2 (Qwen) -> B2 (BioPortal) -> C2 (Qwen) -> D2.
-# NON validé manuellement. À comparer avec fragment_ontologies_version2.ttl (référence manuelle).
+# On fait une comparaison manuelle avec le pipeline non automatisé
 # Règle : owl:sameAs uniquement si le match C2 vaut "Exact" pour toutes les utilisations du concept.
 
 @prefix :     <http://example.org/questionnaire-ontology#> .
