@@ -33,7 +33,6 @@ with open(MATCH_CSV, encoding="utf-8-sig") as f:
             matches_by_id.setdefault(sid, []).append(row["Match"].strip())
 
 # Un ID a droit à owl:sameAs seulement si TOUTES ses utilisations sont Exact
-# (règle exacte appliquée par generation_ttl_D2.py)
 ids_expecting_sameas = {sid for sid, ms in matches_by_id.items() if all(m == "Exact" for m in ms)}
 
 # ---------- 2. Syntaxe ----------
