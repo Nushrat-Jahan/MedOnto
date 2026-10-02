@@ -174,7 +174,6 @@ Plusieurs limites ont été observées lors des tests :
 
 ## À faire
 
-*  Comparaison avec une méthode **baseline** : premier résultat BioPortal brut.
 *  Testez une méthode de base sans LLM (prendre directement le premier résultat renvoyé par BioPortal) afin de mesurer ce que le LLM apporte réellement.
 *  Extension à un **jeu d'items plus large**.
   
