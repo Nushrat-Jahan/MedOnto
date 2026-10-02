@@ -176,4 +176,5 @@ Plusieurs limites ont été observées lors des tests :
 
 *  Testez une méthode de base sans LLM (prendre directement le premier résultat renvoyé par BioPortal) afin de mesurer ce que le LLM apporte réellement.
 *  Extension à un **jeu d'items plus large**.
+*  J'essaye de chercher tous les filles, et je demande à Qwen de choisir entre les filles et ce qu'il m'a proposé en premier
   
