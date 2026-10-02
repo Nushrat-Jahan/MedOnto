@@ -23,8 +23,7 @@ Contrôles :
   - AUCUNE COLLISION D'IRI : si deux concepts distincts (labels différents)
     produisaient le même identifiant Turtle une fois nettoyé, ils seraient
     fusionnés en silence dans le graphe sans que rdflib ne le détecte à la
-    validation. Le script échoue explicitement dans ce cas plutôt que de
-    laisser une fusion silencieuse se produire.
+    validation. 
 
 """
 
