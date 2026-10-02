@@ -1,5 +1,5 @@
 """
-Étape C2 du pipeline automatique — Décision du match par Qwen.
+Étape du pipeline automatique — Décision du match par Qwen.
 
 Le modèle reçoit, pour chaque item, le texte de l'item ET la liste FERMÉE
 des candidats SNOMED CT produits par B2 (label + ID + définition + synonymes),
