@@ -93,6 +93,9 @@ def eliminate_stopwords(txt:str) -> list[str]:
         if token.lower() not in STOPWORDS
     ]
 
+def count_words_in_span(span:str,stopwords = False) ->int:
+    return len(span.split()) if stopwords else len(eliminate_stopwords(span))
+
 def compute_density_semantic(entities:list[dict[str,str|float]],txt:str,stopwords = False) -> float: 
     if stopwords:
         n_tokens = len(eliminate_stopwords(txt))
@@ -100,7 +103,7 @@ def compute_density_semantic(entities:list[dict[str,str|float]],txt:str,stopword
         n_tokens = len(txt.split())
     if not entities:
         return 0
-    n_entities = len(entities)
+    n_entities = sum([count_words_in_span(txt[entitie["start"]:entitie["end"]],stopwords) for entitie in entities])
 
     return n_entities/n_tokens
 
