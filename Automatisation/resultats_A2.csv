@@ -1,4 +1,4 @@
-﻿Source,Concept,Category,Relation,Evidence,SNOMED CT match,Status,Validation
+﻿Source,Concept,Category,Relation,Evidence,Snomed CT match,Status,Validation
 "PHQ-9 - phq2 : Feeling down, depressed, or hopeless",depression,symptom,,"This item directly assesses the experience of depression, a common symptom of depressive disorders.",,existing_concept,
 PHQ-9 - phq4 : Feeling tired or having little energy,fatigue,symptom,,"The item describes a subjective experience of tiredness or lack of energy, which is a common symptom of depression.",,existing_concept,
 "PHQ-9 - phq7 : Trouble concentrating on things, such as reading the newspaper or watching television",attention_deficit,symptom,,"The item assesses difficulty concentrating, which is a common symptom of depression.",,existing_concept,
