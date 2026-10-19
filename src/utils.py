@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING, Any, NamedTuple
 if TYPE_CHECKING:
+    pass
+
 class Triplet(NamedTuple):
     subject: str
     relation: str
