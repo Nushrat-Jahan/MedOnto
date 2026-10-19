@@ -136,5 +136,7 @@ def preprocess(txt_file_path: str | list[str],gliner_model_path:str,not_filterin
     return potential_text
 
 
+#Embeddings a faire
+
 if __name__ == "__main__":
     print(clean_text(load_pdf_file("text/depression.pdf")))

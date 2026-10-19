@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from src.spanextraction import Triplet
+    from src.text.spanextraction import Triplet
 
-from src.spanextraction import spanextraction
+from src.text.spanextraction import spanextraction
 from src.postprocess import postprocess
-from src.preprocess import preprocess
+from src.text.preprocess import preprocess
 from src.utils import make_json_from_triplets,write_json_file
 from tqdm import tqdm
 
