@@ -1,0 +1,10 @@
+Item ID,Item text,Manual concept,Manual SNOMED ID,Manual match,Automatic concept,Automatic SNOMED ID,Automatic match,Agreement,Comment
+phq2,"Feeling down, depressed, or hopeless",Depressed mood,366979004,Narrower,Mild depression,310495003,Narrower,Disagreement - wrong concept,Automatic picked a disorder-level concept (Mild depression) instead of the symptom-level mood state
+phq4,Feeling tired or having little energy,Fatigue,84229001,Exact,Fatigue,84229001,Exact,Full agreement,Same concept and same match value
+phq7,"Trouble concentrating on things, such as reading the newspaper or watching television",Poor concentration,26329005,Exact,"Attention deficit hyperactivity disorder, combined type",31177006,Narrower,Disagreement - wrong concept,Automatic inferred a full ADHD diagnosis absent from the item
+phq9,Thoughts that you would be better off dead or of hurting yourself in some way,Suicidal thoughts,6471006,Narrower,Suicidal thoughts,6471006,Exact,Partial agreement,Same concept identified
+gad1,"Feeling nervous, anxious, or on edge",Anxiety,48694002,Narrower,Anxiety,48694002,Exact,Partial agreement,Same concept identified
+gad4,Trouble relaxing,None (Candidate Project Concept),,No Match,None (Candidate Project Concept),,No Match,Full agreement,"Both methods found no suitable SNOMED CT concept for ""trouble relaxing"""
+gad6,Becoming easily annoyed or irritable,Feeling irritable,55929007,Exact,Feeling irritable,55929007,Exact,Full agreement,Same concept and same match value
+epw4,As a passenger in a car for an hour without a break,Excessive daytime sleepiness,1367959007,Narrower,None (Candidate Project Concept),,No Match,Disagreement - false negative,Correct candidate was ranked #1 in the BioPortal results given to the model and was still rejected
+epw8,"In a car, while stopped for a few minutes in traffic",Excessive daytime sleepiness,1367959007,Narrower,None (Candidate Project Concept),,No Match,Disagreement - false negative,Same case as epw4

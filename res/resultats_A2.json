@@ -1,0 +1,119 @@
+[
+  {
+    "item_id": "phq2",
+    "questionnaire": "PHQ-9",
+    "question": "Feeling down, depressed, or hopeless",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "depression",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "This item directly assesses the experience of depression, a common symptom of depressive disorders.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "phq4",
+    "questionnaire": "PHQ-9",
+    "question": "Feeling tired or having little energy",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "fatigue",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item describes a subjective experience of tiredness or lack of energy, which is a common symptom of depression.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "phq7",
+    "questionnaire": "PHQ-9",
+    "question": "Trouble concentrating on things, such as reading the newspaper or watching television",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "attention_deficit",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item assesses difficulty concentrating, which is a common symptom of depression.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "phq9",
+    "questionnaire": "PHQ-9",
+    "question": "Thoughts that you would be better off dead or of hurting yourself in some way",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "suicidal ideation",
+    "category": "finding",
+    "relation": {
+      "predicate": "is_a",
+      "target_concept": "psychological finding"
+    },
+    "evidence": "The item asks about thoughts of self-harm, which is a specific type of suicidal ideation.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "gad1",
+    "questionnaire": "GAD-7",
+    "question": "Feeling nervous, anxious, or on edge",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "anxiety",
+    "category": "symptom",
+    "relation": {
+      "predicate": "is_a",
+      "target_concept": "anxiety"
+    },
+    "evidence": "The item directly assesses the experience of anxiety, a common symptom in anxiety disorders.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "gad4",
+    "questionnaire": "GAD-7",
+    "question": "Trouble relaxing",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "anxiety",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item assesses difficulty in relaxing, which is a common anxiety symptom.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "gad6",
+    "questionnaire": "GAD-7",
+    "question": "Becoming easily annoyed or irritable",
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "concept_proposed": "irritability",
+    "category": "symptom",
+    "relation": {
+      "predicate": "is_a",
+      "target_concept": "mood disturbance"
+    },
+    "evidence": "The item directly assesses irritability, a mood disturbance often reported in anxiety disorders.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "epw4",
+    "questionnaire": "Epworth Sleepiness Scale",
+    "question": "As a passenger in a car for an hour without a break",
+    "response_type": "Likert 4 points - how likely the person is to doze off or fall asleep in this situation (sleepiness, as opposed to feeling merely tired)",
+    "scale": "0=Would never doze, 1=Slight chance of dozing, 2=Moderate chance of dozing, 3=High chance of dozing",
+    "concept_proposed": "daytime sleepiness",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item measures the likelihood of dozing off during a passive, non-stimulating activity, which is a direct assessment of daytime sleepiness.",
+    "status": "existing_concept"
+  },
+  {
+    "item_id": "epw8",
+    "questionnaire": "Epworth Sleepiness Scale",
+    "question": "In a car, while stopped for a few minutes in traffic",
+    "response_type": "Likert 4 points - how likely the person is to doze off or fall asleep in this situation (sleepiness, as opposed to feeling merely tired)",
+    "scale": "0=Would never doze, 1=Slight chance of dozing, 2=Moderate chance of dozing, 3=High chance of dozing",
+    "concept_proposed": "daytime sleepiness",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item measures the likelihood of dozing off in a specific situation, which is a direct manifestation of daytime sleepiness.",
+    "status": "existing_concept"
+  }
+]
