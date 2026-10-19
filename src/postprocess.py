@@ -1,8 +1,12 @@
 import re 
 import numpy as np 
-from src.spanextraction import Triplet
+class Triplet(NamedTuple):
+    subject: str
+    relation: str
+    object: str
+
 import json 
-from typing import Set
+from typing import NamedTuple, Set
 
 
 try:

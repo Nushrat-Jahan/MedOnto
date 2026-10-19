@@ -1,7 +1,11 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING,Any
+from typing import TYPE_CHECKING, Any, NamedTuple
 if TYPE_CHECKING:
-    from src.spanextraction import Triplet
+class Triplet(NamedTuple):
+    subject: str
+    relation: str
+    object: str
+
 
 import json
 import re
