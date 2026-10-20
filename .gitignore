@@ -29,3 +29,10 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Règles de la branche architecture-commun
+/myenv
+.env
+.pytest_cache
+text/
+tests/

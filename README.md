@@ -1,53 +1,107 @@
 # MedOnto
-LLM-assisted ontology construction from heterogeneous health data.
 
-## Données structurées (bases tabulaires)
+**MedOnto** is a project on **LLM-assisted ontology engineering from heterogeneous health data**.
 
-Pipeline automatisé qui transforme les variables d'une base de données structurée (CSV…) en
-concepts normalisés, catégories sémantiques et relations, puis en fragment d'ontologie aligné
-sur **SNOMED CT**. Il doit fonctionner avec **n'importe quelle base fournie** : aucun nom de
-colonne, séparateur ou format n'est codé en dur.
+The project studies how health data can be semantically interpreted by a large language model
+(Qwen2.5), aligned with a reference terminology (SNOMED CT) and transformed into ontology content
+(concepts, relations, RDF/OWL fragments), and how data preparation affects the quality of the result.
 
-### Organisation prévue
+## Project tracks
+
+| Track | Source data | Goal |
+|---|---|---|
+| Structured cohort data | Tabular variables (CSV) | Turn variables into normalized concepts, categories and relations, then into an ontology fragment |
+| Questionnaire and assessment data | Questionnaire items | Align measured clinical or psychological concepts with biomedical ontologies |
+| Medical and mental-health text | Unstructured documents | Extract concepts and relation triplets, then align and build ontology fragments |
+
+Common workflow:
+
+**Source data → LLM-assisted semantic interpretation → post-processing → verification → ontology alignment → semantic representation**
+
+## The `architecture-commun` branch
+
+This branch is the **shared foundation** of the project. Each student merges it into their own branch
+and reorganizes their code on the same structure, so that the three tracks can be merged together
+without conflicts.
 
 ```text
-main.py            ← point d'entrée unique : exécute les étapes du pipeline dans l'ordre
-src/               ← une étape = un module de fonctions, appelées par main.py
-data/              ← bases de données fournies (non versionnées)
-outputs/
-  <nom_base>_<id>/ ← un dossier de résultats par base
+MedOnto/
+├── README.md              ← project documentation (this file)
+├── LICENSE
+└── src/
+    ├── __init__.py
+    ├── postprocess.py     ← shared entry point to standardize model outputs
+    ├── verification.py    ← shared logic to accept or reject model outputs
+    ├── utils.py           ← shared helper functions (file I/O, parsing)
+    ├── text/              ← track: medical and mental-health text
+    │   ├── __init__.py
+    │   ├── pipeline.py
+    │   ├── preprocess.py
+    │   └── spanextraction.py
+    ├── bdd/               ← track: structured cohort data
+    │   ├── __init__.py
+    │   ├── task1.py
+    │   ├── extract_variables.py
+    │   └── build_ontology.py
+    └── questions/         ← track: questionnaire and assessment data
+        ├── __init__.py
+        ├── extraction_qwen_automatisee.py
+        ├── recherche_snomed_B2.py
+        ├── decision_match_C2.py
+        ├── generation_ttl_D2.py
+        └── valider_ttl_D2.py
 ```
 
-- `main.py` **importe** les fonctions des modules de `src/` et les appelle dans l'ordre ;
-  chaque fonction reste utilisable et testable séparément.
-- La base est passée **en argument** : le pipeline peut ainsi être lancé sans intervention,
-  y compris sur plusieurs bases à la suite.
+### Shared modules (`src/`)
 
-  ```bash
-  python main.py data/ma_base.csv
-  ```
+- **`postprocess.py`** is the **entry point to standardize our data**. Every track passes the raw
+  outputs of the model through it, so that all results share the same format before verification:
+  text normalization (lowercase, whitespace) and removal of meaningless items (punctuation,
+  stopwords, anonymized tokens, digits only, blacklisted terms, lab-value patterns).
+- **`verification.py`** will contain the **common logic to validate or reject the outputs of Qwen**:
+  structure checks, mandatory fields, verification against SNOMED CT and assignment of a validation
+  status (Correct / Incorrect / Uncertain). It currently contains documentation only.
+- **`utils.py`** gathers the **shared helper functions** used by every track: reading text, PDF,
+  TOML and JSON files, writing JSON files, parsing concept and triplet lists from raw model output,
+  and the common `Triplet` structure (subject, relation, object).
 
-- Chaque base reçoit un **identifiant** (empreinte de son contenu) : ses résultats sont rangés
-  dans `outputs/<nom_base>_<id>/`, ce qui permet de tester plusieurs bases sans les mélanger.
-- Chaque étape écrit sa sortie en **JSON**, lue par l'étape suivante : on peut relancer le
-  pipeline à partir d'une étape sans refaire les précédentes (notamment les appels au LLM).
+### Track packages
 
-### Étapes du pipeline
+Each track has its own package inside `src/`:
 
-1. **Extraction des variables** : lecture de la base et description de chaque variable
-   (nom, type, valeurs, exemple…).
-2. **Description des variables** : rédaction automatique de la description de chaque variable
-   par le script, à partir des données elles-mêmes (sans passer par le LLM).
-3. **Construction du prompt** à partir des variables extraites.
-4. **Exécution du prompt** avec Qwen 2.5 7B en local via Ollama et récupération de la sortie JSON.
-5. **Validation des concepts** via une API SNOMED CT.
-6. **Construction du fragment d'ontologie** (Turtle) à partir des concepts validés.
-7. **Évaluation** de la sortie à l'aide de métriques.
+| Package | Track |
+|---|---|
+| `src/text/` | Medical and mental-health text |
+| `src/bdd/` | Structured cohort data |
+| `src/questions/` | Questionnaire and assessment data |
 
-Le pipeline est développé étape par étape ; `main.py` est complété au fur et à mesure que les
-étapes sont disponibles.
+Every folder of `src/` is a Python package (`__init__.py`). Code is run and imported from the
+project root, for example `from src.utils import load_json_file` or
+`from src.text.preprocess import preprocess`.
 
-### Lancement
+## Common technical setup
 
-Les scripts se lancent depuis la racine du projet. Prérequis : Python 3, `pandas`, `ollama`, et
-le modèle `qwen2.5:7b` installé dans Ollama.
+- **LLM:** Qwen2.5-7B-Instruct
+- **Reference terminology:** SNOMED CT only. When no appropriate concept exists, the concept is
+  recorded as a **Candidate Project Concept**.
+- **Semantic technologies:** RDF, OWL
+- **Validation:** Correct / Incorrect / Uncertain
+
+LLM-generated concepts and identifiers are never accepted automatically: they must be verified.
+
+## Reproducibility
+
+Experiments should preserve, when applicable: the source data reference, the exact prompt, the raw
+LLM output, the ontology mappings, the validated results, and the corrections and uncertainty notes.
+
+## Data
+
+External datasets are not redistributed through this repository. Each dataset remains subject to
+its original license, access conditions and terms of use.
+
+## License
+
+Original code and project materials are licensed under the **Apache License 2.0**. External
+datasets, models, terminologies, ontologies and questionnaires remain subject to their own licenses
+and terms of use.
+
