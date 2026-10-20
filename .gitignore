@@ -5,5 +5,5 @@
 # Python cache
 __pycache__/
 *.py[cod]
-text/
+data/
 tests/
