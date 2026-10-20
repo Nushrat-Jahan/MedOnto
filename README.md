@@ -26,16 +26,33 @@ without conflicts.
 
 ```text
 MedOnto/
-├── README.md          ← project documentation (this file)
+├── README.md              ← project documentation (this file)
 ├── LICENSE
-├── postprocess.py     ← shared entry point to standardize model outputs
-├── verification.py    ← shared logic to accept or reject model outputs
-├── utils.py           ← shared helper functions (file I/O, parsing)
 └── src/
-    └── __init__.py    ← package for track-specific code
+    ├── __init__.py
+    ├── postprocess.py     ← shared entry point to standardize model outputs
+    ├── verification.py    ← shared logic to accept or reject model outputs
+    ├── utils.py           ← shared helper functions (file I/O, parsing)
+    ├── text/              ← track: medical and mental-health text
+    │   ├── __init__.py
+    │   ├── pipeline.py
+    │   ├── preprocess.py
+    │   └── spanextraction.py
+    ├── bdd/               ← track: structured cohort data
+    │   ├── __init__.py
+    │   ├── task1.py
+    │   ├── extract_variables.py
+    │   └── build_ontology.py
+    └── questions/         ← track: questionnaire and assessment data
+        ├── __init__.py
+        ├── extraction_qwen_automatisee.py
+        ├── recherche_snomed_B2.py
+        ├── decision_match_C2.py
+        ├── generation_ttl_D2.py
+        └── valider_ttl_D2.py
 ```
 
-### Shared modules
+### Shared modules (`src/`)
 
 - **`postprocess.py`** is the **entry point to standardize our data**. Every track passes the raw
   outputs of the model through it, so that all results share the same format before verification:
@@ -48,10 +65,19 @@ MedOnto/
   TOML and JSON files, writing JSON files, parsing concept and triplet lists from raw model output,
   and the common `Triplet` structure (subject, relation, object).
 
-### `src/`
+### Track packages
 
-`src/` holds the code specific to each track. It is a Python package (`__init__.py`), so modules
-are imported from the project root, for example `from src.<module> import <function>`.
+Each track has its own package inside `src/`:
+
+| Package | Track |
+|---|---|
+| `src/text/` | Medical and mental-health text |
+| `src/bdd/` | Structured cohort data |
+| `src/questions/` | Questionnaire and assessment data |
+
+Every folder of `src/` is a Python package (`__init__.py`). Code is run and imported from the
+project root, for example `from src.utils import load_json_file` or
+`from src.text.preprocess import preprocess`.
 
 ## Common technical setup
 
