@@ -16,6 +16,8 @@ import torch
 from torch import Tensor
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
+from tqdm import tqdm
+from functools import lru_cache
 
 _BLACKLIST = None
 
@@ -107,13 +109,19 @@ def make_frases(triplet:Triplet) -> str:
 def make_frases_list(list_triplets:list[Triplet]) -> list[str]:
     return [ make_frases(triplet) for triplet in list_triplets]
 
-def _compute_sentence_embeddings(list_triplets:list[Triplet]) -> Tensor: 
-    model_id = "doctolib-lab/doctobert-fr-base"
 
+from functools import lru_cache
+
+@lru_cache(maxsize=1)
+def _get_model():
+    model_id = "doctolib-lab/doctobert-fr-base"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     encoder = AutoModel.from_pretrained(model_id)
-
     encoder.eval()
+    return tokenizer, encoder
+
+def _compute_sentence_embeddings(list_triplets:list[Triplet]) -> Tensor: 
+    tokenizer, encoder = _get_model()
 
     texts = make_frases_list(list_triplets)
     inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
@@ -135,13 +143,13 @@ def _compute_sentence_embeddings(list_triplets:list[Triplet]) -> Tensor:
 
     return sentence_embedding
 
-def create_mask(sentence_embeddings, threshold=0.90):
+def create_mask(sentence_embeddings, threshold=0.85):
     similarities = sentence_embeddings @ sentence_embeddings.T
 
     n = similarities.shape[0]
     mask = torch.ones(n, dtype=torch.bool, device=sentence_embeddings.device)
 
-    for i in range(n):
+    for i in tqdm(range(n),desc="Cleaning sinonims"):
         if not mask[i]:
             continue
 
@@ -151,7 +159,7 @@ def create_mask(sentence_embeddings, threshold=0.90):
 
     return mask
 
-def _clean(outputs: list[Triplet],threshold: float = 0.90) -> list[Triplet]:
+def _clean(outputs: list[Triplet],threshold: float = 0.85) -> list[Triplet]:
 
     cleaned = _clean_list(outputs)
 
