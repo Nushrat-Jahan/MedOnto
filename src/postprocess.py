@@ -1,23 +1,21 @@
 import re 
 import numpy as np 
+from typing import NamedTuple, Set
+from src.utils import STOPWORDS
+
 class Triplet(NamedTuple):
     subject: str
     relation: str
     object: str
 
 import json 
-from typing import NamedTuple, Set
 
 
-try:
-    from nltk.corpus import stopwords
-    STOPWORDS = set(stopwords.words("english"))
-except Exception as e:
-    raise ImportError(
-        "NLTK required. Install: pip install nltk\n"
-        "Then: python -c \"import nltk; nltk.download('stopwords')\""
-    ) from e
 
+import torch
+from torch import Tensor
+import torch.nn.functional as F
+from transformers import AutoTokenizer, AutoModel
 
 _BLACKLIST = None
 
@@ -103,7 +101,69 @@ def _clean_list(outputs: list[Triplet]) -> list[Triplet]:
 
     return cleaned
 
+def make_frases(triplet:Triplet) -> str:
+    return triplet.subject+ " "+triplet.relation+ " "+triplet.object
+
+def make_frases_list(list_triplets:list[Triplet]) -> list[str]:
+    return [ make_frases(triplet) for triplet in list_triplets]
+
+def _compute_sentence_embeddings(list_triplets:list[Triplet]) -> Tensor: 
+    model_id = "doctolib-lab/doctobert-fr-base"
+
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    encoder = AutoModel.from_pretrained(model_id)
+
+    encoder.eval()
+
+    texts = make_frases_list(list_triplets)
+    inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
+
+    with torch.no_grad():
+        outputs = encoder(**inputs)
+
+    token_embeddings = outputs.last_hidden_state
+
+
+    mask = inputs["attention_mask"].unsqueeze(-1)
+
+    sentence_embedding = (
+        (token_embeddings * mask).sum(dim=1)
+        / mask.sum(dim=1).clamp(min=1)
+    )
+
+    
+
+    return sentence_embedding
+
+def create_mask(sentence_embeddings, threshold=0.90):
+    similarities = sentence_embeddings @ sentence_embeddings.T
+
+    n = similarities.shape[0]
+    mask = torch.ones(n, dtype=torch.bool, device=sentence_embeddings.device)
+
+    for i in range(n):
+        if not mask[i]:
+            continue
+
+        
+        duplicates = similarities[i, i + 1:] > threshold
+        mask[i + 1:][duplicates] = False
+
+    return mask
+
+def _clean(outputs: list[Triplet],threshold: float = 0.90) -> list[Triplet]:
+
+    cleaned = _clean_list(outputs)
+
+    if not cleaned:
+        return []
+
+    sentence_embeddings = _compute_sentence_embeddings(cleaned)
+    mask = create_mask(sentence_embeddings, threshold)
+
+    return [triplet for triplet, keep in zip(cleaned, mask.tolist()) if keep]
+
 
 def postprocess(lists_triplets: list[list[Triplet]]) -> list[list[Triplet]]:
-    return [_clean_list(triplets) for triplets in lists_triplets]
+    return [_clean(triplets) for triplets in lists_triplets]
 

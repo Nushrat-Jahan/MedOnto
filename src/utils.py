@@ -14,9 +14,15 @@ import re
 import tomllib
 from pypdf import PdfReader
 
-
+try:
+    from nltk.corpus import stopwords
+    STOPWORDS = set(stopwords.words("english"))
+except Exception as e:
+    STOPWORDS = set()
+    print(f"Warning: NLTK stopwords not loaded: {e}")
 
 def load_txt_file(text_path:str) -> str: 
+
     with open(text_path, encoding="utf-8") as f:
         text:str = f.read()
 
