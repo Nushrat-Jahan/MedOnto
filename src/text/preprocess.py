@@ -107,27 +107,20 @@ def filter(entities:list[dict[str,str|float]],txt:str,threshold_score: float,sto
     return (filter_text_average_score(entities,threshold_score) and filter_text_density_sematic(entities,txt,threshold_score,stopwords))
 
 
-def preprocess(txt_file_path: str | list[str],gliner_model_path:str,not_filtering:bool,stopwords:bool) -> list[str]:
-    model,labels,threshold_score = load_gliner_model(gliner_model_path)
-    if isinstance(txt_file_path, str):
-        paths: list[str] = [txt_file_path]
-    else:
-        paths = txt_file_path
-    potential_text:list[str] = []
+def preprocess(txt_file_path: str | list[str], gliner_model_path: str, not_filtering: bool, stopwords: bool) -> list[str]:
+    model, labels, threshold_score = load_gliner_model(gliner_model_path)
+    paths = [txt_file_path] if isinstance(txt_file_path, str) else txt_file_path
+    potential_text: list[str] = []
     
     for path in paths:
-        if is_pdf(path):
-            text = load_pdf_file(path)
-        else:
-            text = load_txt_file(path)
+        text = load_pdf_file(path) if is_pdf(path) else load_txt_file(path)
         cleaned_text = clean_text(text)
-        entities = predict_entites(text,model,labels,threshold_score)
-        if filter(entities,text,threshold_score,stopwords) or not_filtering:
+        entities = predict_entites(text, model, labels, threshold_score)
+        if not_filtering or filter(entities, text, threshold_score, stopwords):
             potential_text.append(cleaned_text)
     return potential_text
 
 
-#Embeddings a faire
 
 if __name__ == "__main__":
     print(clean_text(load_pdf_file("text/depression.pdf")))

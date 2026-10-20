@@ -172,6 +172,6 @@ def _clean(outputs: list[Triplet],threshold: float = 0.85) -> list[Triplet]:
     return [triplet for triplet, keep in zip(cleaned, mask.tolist()) if keep]
 
 
-def postprocess(lists_triplets: list[list[Triplet]]) -> list[list[Triplet]]:
-    return [_clean(triplets) for triplets in lists_triplets]
+def postprocess(lists_triplets: list[list[Triplet]], threshold: float = 0.85) -> list[list[Triplet]]:
+    return [_clean(triplets, threshold) for triplets in lists_triplets]
 

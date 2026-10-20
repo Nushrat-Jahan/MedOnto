@@ -1,1 +1,1 @@
-{"text/depression.pdf": [{"subject": "depression", "relation": "is a type of", "object": "mood disorder"}], "text/Depression_A_Review_of_its_Definition.pdf": [{"subject": "depression", "relation": "is a type of", "object": "mood disorder"}]}
+{"data/depression.pdf": [{"subject": "depression", "relation": "is a type of", "object": "mood disorder"}], "data/Depression_A_Review_of_its_Definition.pdf": [{"subject": "depression", "relation": "is a type of", "object": "psychological disorder"}]}
