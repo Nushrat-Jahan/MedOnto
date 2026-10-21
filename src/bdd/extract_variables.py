@@ -74,6 +74,39 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
     return pd.read_csv(path, sep=sep, encoding=encoding)
 
 
+def extract_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
+    """Retire la ligne des libellés (ligne 2 du fichier) et renvoie les libellés à part.
+
+    À utiliser seulement quand le fichier a une ligne de libellés (option --label-row).
+    Exemple : pour la colonne BIO_CRP, le libellé est "Bio. : CRP (mg/L)" et l'unité
+    "mg/L" (le texte entre parenthèses à la fin du libellé).
+
+    Paramètre :
+        df : la base chargée par load_dataset.
+
+    Renvoie :
+        - le tableau des données, sans la ligne des libellés ;
+        - un dictionnaire {nom de la colonne: {"label": libellé, "unit": unité}}.
+    """
+    labels = {}
+
+    for name in df.columns:
+        # Le libellé est dans la première ligne du tableau
+        label = str(df[name].iloc[0])
+
+        # L'unité est le texte entre parenthèses à la fin du libellé
+        unit = None
+        if label.endswith(")"):
+            start = label.rfind("(")
+            unit = label[start + 1 : -1]
+
+        labels[name] = {"label": label, "unit": unit}
+
+    # On enlève la première ligne : il ne reste que les données
+    data = df.iloc[1:]
+    return data, labels
+
+
 def dataset_id(df: pd.DataFrame) -> str:
     """Calcule un identifiant court et stable pour une base, à partir des noms de ses colonnes.
 
