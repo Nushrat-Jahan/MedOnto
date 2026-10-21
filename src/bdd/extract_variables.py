@@ -137,7 +137,9 @@ def extract_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
         labels[name] = {"label": label, "unit": unit}
 
     # On enlève la première ligne : il ne reste que les données
-    data = df.iloc[1:]
+    # infer_objects : pandas redevine le type des colonnes (la ligne de texte retirée
+    # faisait passer les colonnes de nombres pour du texte)
+    data = df.iloc[1:].infer_objects()
     return data, labels
 
 
