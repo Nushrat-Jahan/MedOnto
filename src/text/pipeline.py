@@ -2,17 +2,12 @@ from __future__ import annotations
 
 import argparse
 import logging
-from typing import TYPE_CHECKING
-
 from tqdm import tqdm
 
 from src.postprocess import postprocess
 from src.text.preprocess import load_tokenizer_and_prompts, preprocess
 from src.text.spanextraction import spanextraction
-from src.utils import make_json_from_triplets, write_json_file
-
-if TYPE_CHECKING:
-    from src.postprocess import Triplet
+from src.utils import make_json_from_concepts, write_json_file
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +39,7 @@ def main(
     tokenizer, system_prompt, user_template = load_tokenizer_and_prompts(model_configs_path)
 
     # 2. Preprocess -> DataLoaders (+ nom de la source de chacun)
-    dataloaders,sources = preprocess(
+    dataloaders, sources = preprocess(
         txt_file_path=txt_file_paths,
         gliner_model_path=gliner_model_config_path,
         not_filtering=not_filtering,
@@ -63,21 +58,22 @@ def main(
         print("Corpus None: no document passed the filter.")
         return
 
-    # 3. Extraction des triplets (un résultat par DataLoader)
-    raw_concepts: list[list[Triplet]] = spanextraction(
+    
+    raw_outputs = spanextraction(
         model_configs_path, dataloaders, tokenizer, max_new_tokens=max_new_tokens
     )
 
-    # 4. Post-traitement
-    clean_concepts: list[list[Triplet]] = postprocess(raw_concepts, similarity_threshold)
+    clean_concepts = postprocess(raw_outputs, similarity_threshold)
 
-    if not clean_concepts:
-        print("Corpus None")
+    n_concepts = sum(len(c) for c in clean_concepts)
+    if n_concepts == 0:
+        print("Corpus None: no valid concept extracted.")
         return
+    logger.info("%d concepts kept across %d sources", n_concepts, len(sources))
 
-    # 5. JSON final : sources[i] <-> clean_concepts[i]
+    
     results = {
-        source: make_json_from_triplets(concepts)
+        source: make_json_from_concepts(concepts)
         for source, concepts in tqdm(
             zip(sources, clean_concepts, strict=True),
             total=len(sources),
@@ -87,9 +83,9 @@ def main(
 
     if res_path:
         write_json_file(res_path, results)
+        logger.info("Results written to %s", res_path)
     else:
         print(results)
-
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

@@ -1,1 +1,12 @@
-{"aisc-team-a1/augmented-clinical-notes": [{"subject": "16-year-old girl", "relation": "has complaint", "object": "discomfort in the neck"}]}
+{
+  "aisc-team-a1/augmented-clinical-notes": [
+    {
+      "item_id": "1",
+      "concept_proposed": "neck dystonia",
+      "category": "disorder",
+      "relation": null,
+      "evidence": "Neck dystonia is characterized by sustained muscle contractions leading to twisting and repetitive movements or abnormal postures. It often occurs concurrently with antipsychotic drugs and.",
+      "status": "existing_concept"
+    }
+  ]
+}

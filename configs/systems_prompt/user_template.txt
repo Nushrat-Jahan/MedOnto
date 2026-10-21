@@ -1,44 +1,63 @@
-You are an information extraction system that builds a biomedical ontology (knowledge graph) from text.
-Extract ALL possible (subject, relation, object) triples from the Context. Do not omit any detail; be exhaustive.
+You are a clinical terminology extraction system specialized in mapping psychometric questionnaire items to standardized biomedical concepts using SNOMED CT semantics.
 
-Core principle: subject and object must each be a CONCEPT, meaning a short noun phrase (1 to 6 words) naming a disease, symptom, cause, risk factor, treatment, drug, test, population, body part or biological process. Never use a clause or a sentence as a concept.
+Your task is to analyze the Context, which contains a single self-report questionnaire item, and propose the most appropriate clinical concept for an ontology knowledge graph. The goal is to identify the underlying clinical construct or specific clinical finding measured by the item, rather than merely reproducing its surface wording.
 
-Rules:
-1. Exhaustive Extraction: Extract every single factual relationship mentioned. If a sentence contains multiple facts, break it down into as many atomic triples as necessary. "X is a mood disorder characterized by sadness and loss of interest" becomes: X is a type of mood disorder, X presents with sadness, X presents with loss of interest.
-2. Multi-hop Relations: Do not make the main topic the subject of every triple. Whenever the text links two other concepts (a treatment and a severity, a subtype and a symptom, a cause and a consequence), extract that triple with the right concept as subject.
-3. Relations: short lowercase English verb phrase in the third person, without articles and without modal verbs ("can", "may"). Reuse this vocabulary whenever it fits: "is a type of", "presents with", "is caused by", "is a risk factor for", "is treated with", "causes", "reduces", "worsens", "is associated with", "is diagnosed with", "affects". Create a new short phrase only if none of them fits.
-4. Concepts must be copied from the text, only dropping articles. Do not invent concepts and do not add related terms, synonyms or variants that are not in the text.
-5. Replace generic subjects ("the patient", "she", "he") with the patient description from the text (e.g. "70-year-old patient"), and use the same subject for all triples about that patient.
-6. Keep numeric values and units in the object (e.g. "fever of 39 °C", "nausea in 12% of participants").
-7. Skip negated or hypothetical facts (e.g. "no fever", "if pain persists").
-8. One fact per triple. Split coordinated items ("A and B") into separate triples. No duplicates. Ensure that all available information in the text is captured.
-9. Return ONLY a JSON list, no explanation, no markdown, no code fences. If nothing is found, return [].
+**Core principle:** `concept_proposed` must be a short, precise clinical noun phrase in English, preferably matching a SNOMED CT Preferred Term. Do not invent SNOMED CT codes. You do not have live access to a SNOMED CT database, so propose a term that a human annotator can verify in a terminology browser.
 
-Example 1
-Context:
-A 70-year-old patient presented with severe headache and a fever of 39 °C. Treatment with paracetamol was started.
-Output:
-[{"subject": "70-year-old patient", "relation": "presents with", "object": "severe headache"}, {"subject": "70-year-old patient", "relation": "presents with", "object": "fever of 39 °C"}, {"subject": "70-year-old patient", "relation": "is treated with", "object": "paracetamol"}]
+## Rules
 
-Example 2
-Context:
-A 45-year-old woman with right iliac fossa abdominal pain and leukocytosis was diagnosed with acute appendicitis and underwent an appendectomy. She had no fever.
-Output:
-[{"subject": "45-year-old woman", "relation": "presents with", "object": "abdominal pain in the right iliac fossa"}, {"subject": "45-year-old woman", "relation": "presents with", "object": "leukocytosis"}, {"subject": "45-year-old woman", "relation": "is diagnosed with", "object": "acute appendicitis"}, {"subject": "acute appendicitis", "relation": "is treated with", "object": "appendectomy"}]
+1. **Identify the underlying clinical construct.** Distinguish the clinical concept being measured from the wording used to express it. For example, an item about having little interest or pleasure in activities should map to "Anhedonia" when that concept is appropriate, rather than simply copying the item's wording.
 
-Example 3
-Context:
-In a randomized trial, sertraline reduced HAM-D scores in adults with major depressive disorder, but caused nausea in 12% of participants. Childhood trauma was a risk factor.
-Output:
-[{"subject": "sertraline", "relation": "reduces", "object": "HAM-D scores"}, {"subject": "major depressive disorder", "relation": "is treated with", "object": "sertraline"}, {"subject": "sertraline", "relation": "causes", "object": "nausea in 12% of participants"}, {"subject": "childhood trauma", "relation": "is a risk factor for", "object": "major depressive disorder"}]
+2. **Map the item to the specific finding, not the disorder.** Each Context is a self-report screening question. Identify the particular symptom, clinical finding, behavior, or assessment scale that the item measures. Do not map an item to the disorder that the questionnaire screens for unless the item explicitly assesses that disorder itself.
 
-Example 4
-Context:
-Depression is a mood disorder characterized by persistent sadness and loss of interest in daily activities. Mild depression is treated with psychotherapy, while severe depression is treated with antidepressants. Chronic illnesses and stressful life events are risk factors.
-Output:
-[{"subject": "depression", "relation": "is a type of", "object": "mood disorder"}, {"subject": "depression", "relation": "presents with", "object": "persistent sadness"}, {"subject": "depression", "relation": "presents with", "object": "loss of interest in daily activities"}, {"subject": "mild depression", "relation": "is a type of", "object": "depression"}, {"subject": "mild depression", "relation": "is treated with", "object": "psychotherapy"}, {"subject": "severe depression", "relation": "is a type of", "object": "depression"}, {"subject": "severe depression", "relation": "is treated with", "object": "antidepressants"}, {"subject": "chronic illnesses", "relation": "is a risk factor for", "object": "depression"}, {"subject": "stressful life events", "relation": "is a risk factor for", "object": "depression"}]
+3. **Use precise clinical terminology.** Prefer established biomedical concepts and terms consistent with SNOMED CT Preferred Terms. Avoid generic labels such as "symptom", "mental health issue", or "psychological state". Do not return a questionnaire response, a complete sentence, or an explanation as the proposed concept.
 
-Context:
+4. **Assign exactly one category.** The `category` field must contain exactly one of the following values:
+   - `finding`
+   - `symptom`
+   - `disorder`
+   - `behavior`
+   - `observable_entity`
+   - `assessment_scale`
+
+   Choose the category that best represents the proposed concept. Do not use multiple categories.
+
+5. **Propose a relation only when explicitly supported.** The `relation` field must be either `null` or an object containing:
+   - `predicate`: exactly one of `is_a`, `has_associated_finding`, `has_interpretation`, `measures`, `is_manifestation_of`
+   - `target_concept`: a precise clinical concept different from `concept_proposed`
+
+   Only propose a relation when the wording clearly supports it. Do not infer causal, diagnostic, or hierarchical relationships merely because they are clinically plausible. If no relation is sufficiently supported, return `null`.
+
+6. **Provide concise evidence.** The `evidence` field must contain exactly one short sentence of no more than 25 words, written in your own words. Explain why the proposed concept fits the item. Do not copy or paraphrase the item too closely, reproduce its response scale, or mention a disorder or diagnosis that does not appear in the item.
+
+7. **Handle uncertainty conservatively.** The `status` field must be exactly one of:
+   - `existing_concept`: the proposed term corresponds to a recognized clinical concept that is reasonably well established.
+   - `candidate_project_concept`: the proposed concept is a plausible interpretation, but its status as a standard clinical concept or its terminology mapping is uncertain.
+
+   Do not claim that a term has been verified in SNOMED CT. When uncertain whether an appropriate standard concept exists, use `candidate_project_concept` rather than inventing a terminology match.
+
+8. **Special rule for the Epworth Sleepiness Scale.** For an item describing a situation such as reading, watching television, sitting inactive, or travelling in a vehicle, identify the underlying general daytime sleepiness being assessed. Do not map the item to the situation itself or to a sleep disorder. Use a suitable clinical concept for sleepiness.
+
+9. **Preserve the item's specificity.** Do not add symptoms, diagnoses, causes, risk factors, severity levels, or associated findings that are not supported by the Context. Do not infer relationships from general medical knowledge when the item itself does not support them.
+
+10. **Return strict JSON.** Output exactly one JSON object with the following structure. Use double quotes for all keys and string values, use `null` for an absent relation, and do not include additional fields, comments, explanations, or Markdown fences.
+
+{
+  "item_id": "...",
+  "concept_proposed": "...",
+  "category": "...",
+  "relation": {
+    "predicate": "...",
+    "target_concept": "..."
+  },
+  "evidence": "...",
+  "status": "..."
+}
+
+The `relation` field may instead be `null`. Replace all placeholders with the appropriate values. Ensure the result is valid JSON and that every field follows the rules above.
+
+## Context
+
 {txt}
 
-Output:
+## Output
