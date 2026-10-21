@@ -88,10 +88,6 @@ def predict_entities(
     return model.predict_entities(txt, labels, threshold=threshold)
 
 
-# Alias pour ne pas casser d'éventuels imports existants (ancienne faute de frappe)
-predict_entites = predict_entities
-
-
 def eliminate_stopwords(txt: str) -> list[str]:
     return [token for token in txt.split() if token.lower() not in STOPWORDS]
 

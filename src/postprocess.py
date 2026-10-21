@@ -1,18 +1,9 @@
 import re 
 import numpy as np 
+import json 
+import torch
 from typing import NamedTuple, Set
 from src.utils import STOPWORDS
-
-class Triplet(NamedTuple):
-    subject: str
-    relation: str
-    object: str
-
-import json 
-
-
-
-import torch
 from torch import Tensor
 import torch.nn.functional as F
 from transformers import AutoTokenizer, AutoModel
@@ -20,6 +11,12 @@ from tqdm import tqdm
 from functools import lru_cache
 
 _BLACKLIST = None
+
+
+class Triplet(NamedTuple):
+    subject: str
+    relation: str
+    object: str
 
 
 def load_blacklist(json_path: str) -> Set[str]:
@@ -110,17 +107,16 @@ def make_frases_list(list_triplets:list[Triplet]) -> list[str]:
     return [ make_frases(triplet) for triplet in list_triplets]
 
 
-from functools import lru_cache
+
 
 @lru_cache(maxsize=1)
 def _get_model():
-    model_id = "doctolib-lab/doctobert-fr-base"
+    model_id = "emilyalsentzer/Bio_ClinicalBERT"
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     encoder = AutoModel.from_pretrained(model_id)
     encoder.eval()
     return tokenizer, encoder
-
-def _compute_sentence_embeddings(list_triplets:list[Triplet]) -> Tensor: 
+def _compute_sentence_embeddings(list_triplets: list[Triplet]) -> Tensor:
     tokenizer, encoder = _get_model()
 
     texts = make_frases_list(list_triplets)
@@ -130,18 +126,11 @@ def _compute_sentence_embeddings(list_triplets:list[Triplet]) -> Tensor:
         outputs = encoder(**inputs)
 
     token_embeddings = outputs.last_hidden_state
-
-
     mask = inputs["attention_mask"].unsqueeze(-1)
 
-    sentence_embedding = (
-        (token_embeddings * mask).sum(dim=1)
-        / mask.sum(dim=1).clamp(min=1)
-    )
+    sentence_embedding = (token_embeddings * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1)
 
-    
-
-    return sentence_embedding
+    return F.normalize(sentence_embedding, p=2, dim=1)  
 
 def create_mask(sentence_embeddings, threshold=0.85):
     similarities = sentence_embeddings @ sentence_embeddings.T
@@ -159,7 +148,7 @@ def create_mask(sentence_embeddings, threshold=0.85):
 
     return mask
 
-def _clean(outputs: list[Triplet],threshold: float = 0.85) -> list[Triplet]:
+def _clean(outputs: list[Triplet],threshold: float = 20) -> list[Triplet]:
 
     cleaned = _clean_list(outputs)
 

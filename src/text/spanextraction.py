@@ -16,7 +16,7 @@ def spanextraction(
     model_configs_path: str,
     dataloaders: list[DataLoader],
     tokenizer: AutoTokenizer,
-    max_new_tokens: int = 1024,
+    max_new_tokens: int = 512,
 ) -> list[list[Triplet]]:
     """Extrait les triplets de chaque DataLoader.
 
@@ -51,6 +51,7 @@ def spanextraction(
                     max_new_tokens=max_new_tokens,
                     do_sample=False,
                     pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
                 )
 
                 # Padding à gauche : le prompt occupe les input_length premières
