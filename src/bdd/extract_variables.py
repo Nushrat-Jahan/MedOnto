@@ -21,6 +21,11 @@ MAX_CATEGORIES = 20  # au-delà, on ne liste plus les valeurs possibles d'une co
 OUT_DIR = Path("outputs")  # dossier racine des résultats (chemin relatif à la racine du projet)
 EXCEL_EXTENSIONS = (".xlsx", ".xlsm")  # formats Excel lus avec openpyxl
 
+# Repères lus dans les libellés, utilisés pour typer une variable quand il n'y a pas de données
+YES_NO_MARK = "(ON)"  # libellé finissant par (ON) : variable Oui/Non
+YES_NO_VALUES = ["Non", "Oui"]  # valeurs d'une variable Oui/Non
+DATE_WORD = "date"  # libellé contenant le mot "date" : variable date
+
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
     """Lit une base CSV ou Excel quelconque et la renvoie sous forme de DataFrame pandas.
@@ -133,10 +138,21 @@ def dataset_id(df: pd.DataFrame) -> str:
     return fingerprint.hexdigest()[:8]
 
 
-def extract_variables(df: pd.DataFrame) -> list[dict]:
-    """Décrit chaque colonne de la base : nom, type, exemple et valeurs possibles.
+def extract_variables(df: pd.DataFrame, labels: dict | None = None) -> list[dict]:
+    """Décrit chaque colonne de la base : nom, libellé, unité, type, exemple et valeurs possibles.
 
-    Le type est déduit des données elles-mêmes, dans cet ordre :
+    Si des libellés sont fournis (renvoyés par extract_labels), ils sont ajoutés à chaque
+    variable avec leur unité.
+
+    Quand une colonne n'a aucune donnée (ex. modèle vide) et que les libellés sont fournis,
+    le type est déduit du libellé :
+    - libellé contenant "identifier"         -> "identifier" ;
+    - libellé finissant par YES_NO_MARK (ON) -> "binary text", valeurs Non / Oui ;
+    - libellé contenant le mot DATE_WORD     -> "date" ;
+    - libellé avec une unité, ex. (mg/L)     -> "numeric" (nombre, entier ou décimal) ;
+    - sinon                                  -> "empty".
+
+    Sinon, le type est déduit des données elles-mêmes, dans cet ordre :
     - "empty"            : colonne sans aucune valeur ;
     - "identifier"       : numéro qui distingue chaque ligne, comme un numéro de patient
                            (ex. SEQN). Reconnu si les 3 conditions sont réunies :
@@ -156,13 +172,14 @@ def extract_variables(df: pd.DataFrame) -> list[dict]:
     l'intervalle des valeurs, rédigé en anglais pour être compris tel quel par Qwen :
     "any value between 14.1 and 82.0".
 
-    Paramètre :
-        df : la base chargée par load_dataset.
+    Paramètres :
+        df     : la base chargée par load_dataset.
+        labels : les libellés renvoyés par extract_labels, ou None s'il n'y en a pas.
 
     Renvoie :
         une liste avec un dictionnaire par colonne, dans l'ordre de la base :
-        {"name", "type", "example", "n_distinct", "values", "range"}
-        ("example", "values" et "range" valent None quand ils ne s'appliquent pas).
+        {"name", "label", "unit", "type", "example", "n_distinct", "values", "range"}
+        (les champs valent None quand ils ne s'appliquent pas).
     """
     variables = []
 
@@ -171,6 +188,13 @@ def extract_variables(df: pd.DataFrame) -> list[dict]:
         non_missing = column.dropna()
         n_distinct = non_missing.nunique()
         is_numeric = pd.api.types.is_numeric_dtype(column)
+
+        # Libellé et unité, s'ils sont fournis
+        label = None
+        unit = None
+        if labels is not None:
+            label = labels[name]["label"]
+            unit = labels[name]["unit"]
 
         # Décimales : au moins une valeur numérique qui n'est pas un nombre entier
         is_decimal = False
@@ -210,8 +234,23 @@ def extract_variables(df: pd.DataFrame) -> list[dict]:
         if values is None and var_type in ("integer", "decimal"):
             value_range = f"any value between {non_missing.min()} and {non_missing.max()}"
 
+        # 5. Pas de données mais un libellé : type déduit du libellé
+        if n_distinct == 0 and label is not None:
+            if "identifier" in label.lower():
+                var_type = "identifier"
+            elif label.endswith(YES_NO_MARK):
+                var_type = "binary text"
+                values = YES_NO_VALUES
+                unit = None  # "(ON)" est un codage Oui/Non, pas une unité
+            elif DATE_WORD in label.lower().split():
+                var_type = "date"
+            elif unit is not None:
+                var_type = "numeric"
+
         variables.append({
             "name": str(name),
+            "label": label,
+            "unit": unit,
             "type": var_type,
             "example": example,
             "n_distinct": int(n_distinct),

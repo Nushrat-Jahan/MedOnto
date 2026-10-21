@@ -28,6 +28,7 @@ def main():
     df = load_dataset(args.dataset)
 
     # Ligne de libellés (option --label-row) : retirée des données
+    labels = None
     if args.label_row:
         df, labels = extract_labels(df)
         print(f"-> {len(labels)} libellés lus sur la ligne 2")
@@ -35,7 +36,7 @@ def main():
     ds_id = dataset_id(df)
     print(f"-> {df.shape[0]} lignes, {df.shape[1]} colonnes (ID de la base : {ds_id})")
 
-    variables = extract_variables(df)
+    variables = extract_variables(df, labels)
     out_path = save_variables(variables, args.dataset, ds_id)
     print(f"-> Étape 1 : {len(variables)} variables extraites dans '{out_path}'")
 
