@@ -11,7 +11,8 @@ Les résultats sont écrits dans outputs/<nom_base>_<id>/.
 """
 
 import argparse
-from src.bdd.extract_variables import load_dataset, extract_labels, dataset_id, extract_variables, save_variables
+from src.bdd.extract_variables import (load_dataset, load_readme, extract_labels, dataset_id,
+                                       extract_variables, save_variables)
 
 
 def main():
@@ -37,7 +38,12 @@ def main():
     print(f"-> {df.shape[0]} lignes, {df.shape[1]} colonnes (ID de la base : {ds_id})")
 
     variables = extract_variables(df, labels)
-    out_path = save_variables(variables, args.dataset, ds_id)
+    # Documentation de la base (feuille README d'un Excel), recopiée dans le JSON
+    readme = load_readme(args.dataset)
+    if readme is not None:
+        print(f"-> README trouvé : {len(readme)} lignes de documentation")
+
+    out_path = save_variables(variables, args.dataset, ds_id, readme)
     print(f"-> Étape 1 : {len(variables)} variables extraites dans '{out_path}'")
 
 

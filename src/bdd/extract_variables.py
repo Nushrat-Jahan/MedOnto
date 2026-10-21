@@ -21,6 +21,8 @@ MAX_CATEGORIES = 20  # au-delà, on ne liste plus les valeurs possibles d'une co
 OUT_DIR = Path("outputs")  # dossier racine des résultats (chemin relatif à la racine du projet)
 EXCEL_EXTENSIONS = (".xlsx", ".xlsm")  # formats Excel lus avec openpyxl
 
+README_SHEET = "README"  # nom de la feuille de documentation d'un fichier Excel (s'il y en a une)
+
 # Repères lus dans les libellés, utilisés pour typer une variable quand il n'y a pas de données
 YES_NO_MARK = "(ON)"  # libellé finissant par (ON) : variable Oui/Non
 YES_NO_VALUES = ["Non", "Oui"]  # valeurs d'une variable Oui/Non
@@ -77,6 +79,33 @@ def load_dataset(path: str | Path) -> pd.DataFrame:
 
     # 3. Lecture complète de la base
     return pd.read_csv(path, sep=sep, encoding=encoding)
+
+
+def load_readme(path: str | Path) -> list[dict] | None:
+    """Lit la feuille de documentation (README) d'un fichier Excel, s'il en a une.
+
+    Le script ne cherche pas à comprendre ce texte : il le recopie tel quel, pour le
+    transmettre plus tard à Qwen comme contexte (codes Oui/Non, format des dates…).
+
+    Paramètre :
+        path : chemin du fichier de la base.
+
+    Renvoie :
+        une liste avec un dictionnaire par ligne du README, ex.
+        {"Topic": "Codes", "Detail": "CSV and Excel use Oui/Non ..."} ;
+        None si le fichier n'est pas un Excel ou n'a pas de feuille README.
+    """
+    path = Path(path)
+    if path.suffix.lower() not in EXCEL_EXTENSIONS:
+        return None
+
+    # On cherche une feuille nommée README (majuscules ou minuscules)
+    for sheet in pd.ExcelFile(path).sheet_names:
+        if sheet.lower() == README_SHEET.lower():
+            readme = pd.read_excel(path, sheet_name=sheet)
+            return readme.to_dict(orient="records")
+
+    return None
 
 
 def extract_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
@@ -261,7 +290,8 @@ def extract_variables(df: pd.DataFrame, labels: dict | None = None) -> list[dict
     return variables
 
 
-def save_variables(variables: list[dict], dataset_path: str | Path, ds_id: str) -> Path:
+def save_variables(variables: list[dict], dataset_path: str | Path, ds_id: str,
+                   readme: list[dict] | None = None) -> Path:
     """Enregistre les variables extraites dans outputs/<nom_base>_<id>/variables.json.
 
     Chaque base a son propre dossier de résultats, nommé d'après le nom du fichier
@@ -269,13 +299,14 @@ def save_variables(variables: list[dict], dataset_path: str | Path, ds_id: str) 
     Le dossier est créé s'il n'existe pas. Si variables.json existe déjà pour cette base,
     il est remplacé : pour une même base, l'extraction donne toujours le même résultat.
 
-    Le fichier contient le nom de la base et son identifiant en en-tête, puis la liste
-    des variables, pour savoir d'où vient chaque résultat.
+    Le fichier contient en en-tête le nom de la base, son identifiant et son README
+    (s'il y en a un), puis la liste des variables.
 
     Paramètres :
         variables    : la liste renvoyée par extract_variables.
         dataset_path : chemin du fichier de la base (sert à nommer le dossier).
         ds_id        : identifiant de la base, renvoyé par dataset_id.
+        readme       : la documentation renvoyée par load_readme, ou None.
 
     Renvoie :
         le chemin du fichier variables.json écrit.
@@ -285,10 +316,11 @@ def save_variables(variables: list[dict], dataset_path: str | Path, ds_id: str) 
     dataset_dir = OUT_DIR / f"{dataset_name}_{ds_id}"
     dataset_dir.mkdir(parents=True, exist_ok=True)
 
-    # Contenu : en-tête (base + ID) puis les variables
+    # Contenu : en-tête (base, ID, README) puis les variables
     output = {
         "dataset": Path(dataset_path).name,
         "dataset_id": ds_id,
+        "readme": readme,
         "variables": variables,
     }
 
