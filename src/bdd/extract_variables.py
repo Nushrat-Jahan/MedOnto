@@ -4,7 +4,7 @@ Ce module doit fonctionner avec n'importe quelle base fournie : aucun nom de col
 séparateur ou encodage n'est codé en dur, tout est détecté à partir du fichier lui-même.
 
 Test rapide, depuis la racine du projet :
-    python src/bdd/extract_variables.py "data/<ma_base>.csv"
+    python src/bdd/extract_variables.py "data/<ma_base>.csv"   (ou .xlsx)
 """
 
 import csv
@@ -19,27 +19,39 @@ SEPARATORS = ",;\t|"  # séparateurs autorisés : virgule, point-virgule, tabula
 SAMPLE_SIZE = 64 * 1024  # extrait de 64 Ko : suffisant pour détecter encodage et séparateur
 MAX_CATEGORIES = 20  # au-delà, on ne liste plus les valeurs possibles d'une colonne
 OUT_DIR = Path("outputs")  # dossier racine des résultats (chemin relatif à la racine du projet)
+EXCEL_EXTENSIONS = (".xlsx", ".xlsm")  # formats Excel lus avec openpyxl
 
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
-    """Lit une base CSV quelconque et la renvoie sous forme de DataFrame pandas.
+    """Lit une base CSV ou Excel quelconque et la renvoie sous forme de DataFrame pandas.
 
-    Le séparateur et l'encodage sont détectés automatiquement.
+    Le format est choisi d'après l'extension du fichier :
+    - Excel (.xlsx, .xlsm) : seule la première feuille est lue, c'est celle qui contient
+      les données (les feuilles suivantes, comme un README, sont ignorées). La première
+      ligne donne les noms des colonnes. Nécessite la bibliothèque openpyxl ;
+    - sinon, le fichier est lu comme un CSV : le séparateur et l'encodage sont détectés
+      automatiquement.
     La base est renvoyée telle quelle : aucune colonne n'est supprimée ni modifiée.
+    Si le fichier a une deuxième ligne d'en-tête (libellés des variables), elle apparaît
+    comme première ligne du DataFrame : elle n'est pas traitée ici.
 
     Paramètre :
-        path : chemin du fichier CSV (texte ou objet Path).
+        path : chemin du fichier CSV ou Excel (texte ou objet Path).
 
     Renvoie :
         un DataFrame avec une ligne par enregistrement et une colonne par variable.
 
     Lève :
         FileNotFoundError : si le fichier n'existe pas ;
-        ValueError : si l'encodage ou le séparateur n'est pas reconnu.
+        ValueError : si l'encodage ou le séparateur d'un CSV n'est pas reconnu.
     """
     path = Path(path)
     if not path.is_file():
         raise FileNotFoundError(f"Fichier introuvable : '{path}'")
+
+    # Excel : lecture directe de la première feuille
+    if path.suffix.lower() in EXCEL_EXTENSIONS:
+        return pd.read_excel(path, sheet_name=0)
 
     # 1. Encodage : on garde le premier qui lit l'extrait sans erreur
     for encoding in ENCODINGS:
