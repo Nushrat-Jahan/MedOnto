@@ -71,13 +71,17 @@ Each track has its own package inside `src/`:
 
 | Package | Track |
 |---|---|
-| `src/text/` | Medical and mental-health text |
+| [`src/text/`](src/text/README.md) | Medical and mental-health text |
 | `src/bdd/` | Structured cohort data |
 | `src/questions/` | Questionnaire and assessment data |
 
 Every folder of `src/` is a Python package (`__init__.py`). Code is run and imported from the
 project root, for example `from src.utils import load_json_file` or
 `from src.text.preprocess import preprocess`.
+
+The [`src/text/` README](src/text/README.md) documents the text-extraction pipeline in detail:
+how to configure the models and prompts, and how to run `src.text.pipeline` from the command
+line or as a Python function.
 
 ## Common technical setup
 
