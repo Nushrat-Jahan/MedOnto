@@ -10,7 +10,10 @@ Test rapide, depuis la racine du projet :
     python src/bdd/extract_concepts.py "outputs/<nom_base>_<id>/variables.json"
 """
 
+import hashlib
 import json
+import sys
+from pathlib import Path
 import ollama
 import pandas as pd
 
@@ -155,3 +158,106 @@ def parse_concept(raw: str) -> dict | None:
     if not isinstance(concept, dict):
         return None
     return concept
+
+
+def extract_concepts(variables: list[dict], readme: list[dict] | None = None) -> list[dict]:
+    """Demande à Qwen un concept pour chaque variable de la base, une variable à la fois.
+
+    Les identifiants (ex. numéro de patient) sont ignorés : ce ne sont pas des variables
+    médicales. Les réponses de Qwen ne sont jamais corrigées par le script. Celles qui sortent
+    du format demandé (JSON invalide, catégorie ou statut hors liste) sont signalées à l'écran,
+    pour être revérifiées à la main.
+
+    Pour chaque variable, on garde tout ce qui permet de refaire et de vérifier l'expérience :
+    le message envoyé, la réponse brute de Qwen et le concept lu dans cette réponse.
+
+    Paramètres :
+        variables : la liste renvoyée par extract_variables (ou lue dans variables.json).
+        readme    : la documentation renvoyée par load_readme, ou None.
+
+    Renvoie :
+        une liste avec un dictionnaire par variable envoyée à Qwen :
+        {"variable", "user_prompt", "raw_output", "concept"}
+        ("concept" vaut None si la réponse n'est pas un JSON valide).
+    """
+    concepts = []
+
+    for variable in variables:
+        # Un identifiant n'est pas une variable médicale : il n'est pas envoyé à Qwen
+        if variable["type"] == "identifier":
+            continue
+
+        print(f"-> Qwen : {variable['name']}...")
+        user_prompt = build_user_prompt(variable, readme)
+        raw = ask_qwen(user_prompt)
+        concept = parse_concept(raw)
+
+        # Signalement des réponses à revérifier (rien n'est corrigé)
+        if concept is None:
+            print("   ATTENTION : la réponse n'est pas un JSON valide")
+        else:
+            if concept.get("category") not in CATEGORIES:
+                print(f"   ATTENTION : catégorie hors liste -> {concept.get('category')}")
+            if concept.get("status") not in STATUSES:
+                print(f"   ATTENTION : statut hors liste -> {concept.get('status')}")
+
+        concepts.append({
+            "variable": variable["name"],
+            "user_prompt": user_prompt,
+            "raw_output": raw,
+            "concept": concept,
+        })
+
+    return concepts
+
+
+def save_concepts(concepts: list[dict], dataset_dir: str | Path) -> Path:
+    """Enregistre les concepts proposés par Qwen dans le dossier de la base.
+
+    Le fichier s'appelle concepts_<id du prompt>.json, où l'ID est l'empreinte SHA-1 du
+    prompt système, réduite à 8 caractères (même principe que dataset_id) :
+    - même prompt -> même fichier : comme temperature=0, la réponse est la même ;
+    - prompt modifié -> nouveau fichier : les résultats des anciens prompts sont conservés,
+      ce qui permet de comparer les versions du prompt.
+
+    Le fichier contient en en-tête le modèle et le prompt système exact, puis les concepts.
+
+    Paramètres :
+        concepts    : la liste renvoyée par extract_concepts.
+        dataset_dir : le dossier de la base, ex. outputs/<nom_base>_<id>/ (celui de variables.json).
+
+    Renvoie :
+        le chemin du fichier écrit.
+    """
+    # Identifiant du prompt système
+    prompt_id = hashlib.sha1(SYSTEM_PROMPT.encode("utf-8")).hexdigest()[:8]
+
+    # Contenu : en-tête (modèle, prompt) puis les concepts
+    output = {
+        "model": MODEL,
+        "system_prompt": SYSTEM_PROMPT,
+        "concepts": concepts,
+    }
+
+    out_path = Path(dataset_dir) / f"concepts_{prompt_id}.json"
+    out_path.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+    return out_path
+
+
+if __name__ == "__main__":
+    # Test manuel : lit un variables.json produit par l'étape 1, puis interroge Qwen
+    if len(sys.argv) != 2:
+        sys.exit("Usage : python src/bdd/extract_concepts.py <chemin_de_variables.json>")
+    variables_path = Path(sys.argv[1])
+    data = json.loads(variables_path.read_text(encoding="utf-8"))
+
+    concepts = extract_concepts(data["variables"], data.get("readme"))
+
+    # Une ligne par variable : concept proposé, catégorie, statut
+    print()
+    for item in concepts:
+        concept = item["concept"] or {}
+        print(f"{item['variable']:25} | {concept.get('concept_proposed')} | {concept.get('category')} | {concept.get('status')}")
+
+    out_path = save_concepts(concepts, variables_path.parent)
+    print(f"\n{len(concepts)} concepts enregistrés dans '{out_path}'")
