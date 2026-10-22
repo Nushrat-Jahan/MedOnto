@@ -34,14 +34,22 @@ Le projet porte actuellement sur **9 items issus de 3 questionnaires** :
 
 ```text
 Automatisation/
-├── extraction_qwen_automatisee.py        # extraction du concept clinique via Qwen
-├── recherche_snomed_B2.py                # recherche de candidats SNOMED via BioPortal
-├── decision_match_C2.py                  # décision du match (Exact/Broader/Narrower/No Match)
-├── generation_ttl_D2.py                  # génération du fragment RDF/Turtle
-├── valider_ttl_D2.py                     # Validation syntaxique et sémantique du TTL
-├── questionnaire_ontology.ttl             # Fragment RDF validé manuellement (référence)
-├── questionnaire_ontology_AUTO_D2.ttl     # Fragment RDF généré automatiquement
-└── .env                                  # Clé API BioPortal (non versionné)
+├── src/
+│   ├── extraction_qwen_automatisee.py     # A2 : extraction du concept clinique via Qwen
+│   ├── recherche_snomed_B2.py             # B2 : recherche de candidats SNOMED via BioPortal
+│   ├── decision_match_C2.py               # C2 : décision du match (Exact/Broader/Narrower/No Match)
+│   ├── generation_ttl_D2.py               # D2 : génération du fragment RDF/Turtle
+│   ├── valider_ttl_D2.py                  # validation syntaxique et sémantique du TTL
+│   └── baseline_top1_C2.py                # baseline : rang 1 de BioPortal, sans le choix de C2
+├── result/
+│   ├── resultats_A2.csv / .json           # sorties de A2
+│   ├── resultats_B2_candidats.csv         # candidats SNOMED (B2)
+│   ├── resultats_C2_match.csv             # décisions de match (C2)
+│   ├── resultats_baseline_top1.csv        # résultats de la baseline
+│   ├── comparaison_manuel_vs_automatique.csv
+│   └── questionnaire_ontology_AUTO_D2.ttl # fragment RDF généré automatiquement
+├── Documentation/                         # documentation (PDF)
+└── .env                                   # clé API BioPortal (non versionné)
 ```
 
 ---
