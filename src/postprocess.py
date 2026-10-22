@@ -30,7 +30,6 @@ class Concept(NamedTuple):
     evidence: str
     status: str
 
-    # --- compatibilité avec l'ancien format Triplet (utils.py) ---
     @property
     def subject(self) -> str:
         return self.concept_proposed
@@ -44,7 +43,6 @@ class Concept(NamedTuple):
         return self.target_concept or ""
 
     def to_dict(self) -> dict:
-        """Format strict du prompt."""
         return {
             "item_id": self.item_id,
             "concept_proposed": self.concept_proposed,
@@ -58,9 +56,6 @@ class Concept(NamedTuple):
         }
 
 
-# ----------------------------------------------------------------------
-# Blacklist / filtres
-# ----------------------------------------------------------------------
 def load_blacklist(json_path: str) -> Set[str]:
     with open(json_path, 'r') as f:
         data = json.load(f)
@@ -123,9 +118,6 @@ def should_skip(s: str) -> bool:
     )
 
 
-# ----------------------------------------------------------------------
-# Parsing + validation du JSON produit par le LLM
-# ----------------------------------------------------------------------
 def _parse_output(raw: Union[str, dict, None]) -> Optional[dict]:
     if raw is None:
         return None
@@ -153,49 +145,55 @@ def _truncate_words(text: str, n: int = MAX_EVIDENCE_WORDS) -> str:
     return " ".join(words[:n]).rstrip(",;:") + "."
 
 
-def _to_concept(raw: Union[str, dict, None]) -> Optional[Concept]:
+def _to_concepts(raw: Union[str, dict, None]) -> list[Concept]:
     data = _parse_output(raw)
     if data is None:
-        return None
+        return []
 
     item_id = str(data.get("item_id") or "").strip()
-    concept = normalize(str(data.get("concept_proposed") or "").replace("_", " "))
     category = normalize(data.get("category"))
     status = normalize(data.get("status"))
     evidence = _truncate_words((data.get("evidence") or "").strip())
 
-    if not item_id or should_skip(concept):
-        return None
-    if "," in concept:  # liste au lieu d'un seul concept
-        return None
-    if category not in CATEGORIES or status not in STATUSES:
-        return None
-    if not evidence:
-        return None
+    if not item_id or category not in CATEGORIES or status not in STATUSES or not evidence:
+        return []
 
     predicate, target = None, None
     rel = data.get("relation")
     if isinstance(rel, dict):
         p = normalize(rel.get("predicate"))
         t = normalize(str(rel.get("target_concept") or "").replace("_", " "))
-        if p in PREDICATES and not should_skip(t) and t != concept:
+        if p in PREDICATES and not should_skip(t):
             predicate, target = p, t
 
-    return Concept(item_id, concept, category, predicate, target, evidence, status)
+    raw_concepts_str = str(data.get("concept_proposed") or "")
+    split_concepts = [c.strip() for c in raw_concepts_str.split(",") if c.strip()]
+
+    extracted_concepts: list[Concept] = []
+    for raw_c in split_concepts:
+        concept = normalize(raw_c.replace("_", " "))
+        
+        if should_skip(concept):
+            continue
+
+        rel_p = predicate if target != concept else None
+        rel_t = target if target != concept else None
+
+        extracted_concepts.append(
+            Concept(item_id, concept, category, rel_p, rel_t, evidence, status)
+        )
+
+    return extracted_concepts
 
 
 def _clean_list(outputs: list) -> list[Concept]:
     cleaned: list[Concept] = []
     for raw in outputs:
-        c = _to_concept(raw)
-        if c is not None:
-            cleaned.append(c)
+        concepts = _to_concepts(raw)
+        cleaned.extend(concepts)
     return cleaned
 
 
-# ----------------------------------------------------------------------
-# Embeddings + déduplication
-# ----------------------------------------------------------------------
 @lru_cache(maxsize=1)
 def _get_model():
     model_id = "emilyalsentzer/Bio_ClinicalBERT"
@@ -240,7 +238,6 @@ def _clean(outputs: list, threshold: float = 0.85) -> list[Concept]:
     if not cleaned:
         return []
 
-    # existing_concept d'abord : ils gagnent face aux candidats
     cleaned.sort(key=lambda c: c.status != "existing_concept")
 
     seen, unique = set(), []
@@ -257,9 +254,4 @@ def _clean(outputs: list, threshold: float = 0.85) -> list[Concept]:
 
 
 def postprocess(lists_outputs: list[list], threshold: float = 0.85) -> list[list[Concept]]:
-    """
-    lists_outputs : pour chaque groupe, une liste de sorties brutes du LLM
-                    (str JSON ou dict).
-    Retourne pour chaque groupe une liste de Concept validés et dédupliqués.
-    """
-    return [_clean(outputs, threshold) for outputs in lists_outputs]
+    return [_clean(group, threshold=threshold) for group in lists_outputs]

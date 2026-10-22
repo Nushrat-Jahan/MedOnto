@@ -1,11 +1,85 @@
 {
   "aisc-team-a1/augmented-clinical-notes": [
     {
-      "item_id": "1",
-      "concept_proposed": "neck dystonia",
+      "item_id": "psychiatric_questionnaire_item_1",
+      "concept_proposed": "neck muscle contracture",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "muscle contracture"
+      },
+      "evidence": "The patient exhibits sustained and abnormal contraction of the neck muscles, pulling her head to the right in an upward direction.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_symptoms_and_diagnosis",
+      "concept_proposed": "chest pain",
+      "category": "finding",
+      "relation": null,
+      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_symptoms_and_diagnosis",
+      "concept_proposed": "swelling right back",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "chest pain"
+      },
+      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_symptoms_and_diagnosis",
+      "concept_proposed": "tumor thoracic wall",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "chest pain"
+      },
+      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_symptoms_and_diagnosis",
+      "concept_proposed": "malignancy",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "chest pain"
+      },
+      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_symptoms_and_diagnosis",
+      "concept_proposed": "biopsy",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "chest pain"
+      },
+      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_hip_joint_symptoms_and_cushing_syndrome",
+      "concept_proposed": "cushing's syndrome",
       "category": "disorder",
       "relation": null,
-      "evidence": "Neck dystonia is characterized by sustained muscle contractions leading to twisting and repetitive movements or abnormal postures. It often occurs concurrently with antipsychotic drugs and.",
+      "evidence": "The patient presented with hip joint pain, restricted range of motion, central obesity, muscle mass reduction, and later developed Cushing's syndrome. These symptoms suggest involvement.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "fall_followup",
+      "concept_proposed": "elbow arthroplasty",
+      "category": "disorder",
+      "relation": {
+        "predicate": "is_a",
+        "target_concept": "elbow arthroplasty procedure"
+      },
+      "evidence": "The patient sought to convert his elbow arthrodesis to an arthroplasty due to dissatisfaction with the functional limitations caused by the nonunion.",
       "status": "existing_concept"
     }
   ]

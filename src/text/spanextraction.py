@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from src.postprocess import _to_concept
+from src.postprocess import _to_concepts
 from src.utils import load_toml_file
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ def spanextraction(
                         row[input_length:], skip_special_tokens=True
                     ).strip()
 
-                    if _to_concept(answer) is None:
+                    if _to_concepts(answer) is None:
                         n_invalid += 1
                         logger.warning(
                             "Invalid concept JSON for source %d, document %d. Raw answer: %r",

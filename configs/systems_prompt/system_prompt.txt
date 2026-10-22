@@ -35,4 +35,4 @@ Return exactly this JSON structure:
   "relation": {"predicate": "...", "target_concept": "..."} or null,
   "evidence": "...",
   "status": "existing_concept" or "candidate_project_concept"
-}"""
+}
