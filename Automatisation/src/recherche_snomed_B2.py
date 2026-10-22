@@ -28,14 +28,18 @@ from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 load_dotenv()
 
+from pathlib import Path
+RES_DIR = Path(__file__).resolve().parent.parent / "result"
+RES_DIR.mkdir(exist_ok=True)
+
 API_URL = "https://data.bioontology.org/search"
 ONTOLOGY = "SNOMEDCT"
 PAGESIZE = 10
 MAX_WORKERS = 3
 TIMEOUT = 30
 MAX_RETRIES = 3
-INPUT_JSON = "resultats_A2.json"
-OUTPUT_CSV = "resultats_B2_candidats.csv"
+INPUT_JSON = RES_DIR / "resultats_A2.json"
+OUTPUT_CSV = RES_DIR / "resultats_B2_candidats.csv"
 
 
 
