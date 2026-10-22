@@ -31,9 +31,13 @@ import csv
 import json
 import re
 
-INPUT_A2 = "resultats_A2.json"
-INPUT_C2 = "resultats_C2_match.csv"
-OUTPUT_TTL = "questionnaire_ontology_AUTO_D2.ttl"
+from pathlib import Path
+RES_DIR = Path(__file__).resolve().parent.parent / "result"
+RES_DIR.mkdir(exist_ok=True)
+
+INPUT_A2 = RES_DIR / "resultats_A2.json"
+INPUT_C2 = RES_DIR / "resultats_C2_match.csv"
+OUTPUT_TTL = RES_DIR / "questionnaire_ontology_AUTO_D2.ttl"
 REF_MANUELLE = "fragment_ontologies_version2.ttl"
 
 SNOMED_NS = "http://purl.bioontology.org/ontology/SNOMEDCT/"
