@@ -24,6 +24,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 from dotenv import load_dotenv
 
 API_URL = "https://data.bioontology.org/search"
@@ -167,3 +168,111 @@ def search_candidates(query: str, key: str, exact: bool) -> list[dict]:
             print(f"   ERREUR pour la recherche '{query}' : {error}")
             return []
     return []
+
+
+def search_concepts(concepts: list[dict], key: str) -> list[dict]:
+    """Cherche dans SNOMED CT le concept proposé par Qwen pour chaque variable.
+
+    Stratégie, pour chaque concept :
+    1. recherche exacte du terme proposé ;
+    2. si elle ne trouve rien, recherche large (au plus PAGESIZE candidats) ;
+    3. si toujours rien : aucun candidat (la variable deviendra un Candidate Project Concept).
+
+    Les "_" que Qwen met parfois entre les mots sont remplacés par des espaces
+    ("alanine_transaminase_measurement" -> "alanine transaminase measurement").
+    Les candidats ne sont pas filtrés par catégorie : celle proposée par Qwen n'est pas fiable
+    (ex. une mesure de laboratoire classée observable_entity au lieu de procedure). La
+    hiérarchie de chaque candidat est gardée, pour le choix de l'étape 4.
+
+    Paramètres :
+        concepts : la liste "concepts" de concepts_<id>.json (renvoyée par extract_concepts).
+        key      : la clé de l'API.
+
+    Renvoie :
+        une liste avec un dictionnaire par variable :
+        {"variable", "query", "search_mode", "candidates"}, où search_mode vaut "exact",
+        "broad" ou None (aucun candidat, ou pas de concept proposé par Qwen).
+    """
+    searches = []
+
+    for item in concepts:
+        concept = item["concept"]
+
+        # Réponse invalide de Qwen : rien à chercher
+        if concept is None or not concept.get("concept_proposed"):
+            searches.append({"variable": item["variable"], "query": None,
+                             "search_mode": None, "candidates": []})
+            continue
+
+        query = str(concept["concept_proposed"]).replace("_", " ")
+        print(f"-> SNOMED CT : {item['variable']} ('{query}')...")
+
+        # 1. Recherche exacte, 2. sinon recherche large
+        search_mode = "exact"
+        candidates = search_candidates(query, key, exact=True)
+        if not candidates:
+            search_mode = "broad"
+            candidates = search_candidates(query, key, exact=False)
+        if not candidates:
+            search_mode = None
+
+        print(f"   {len(candidates)} candidat(s), recherche {search_mode}")
+        searches.append({
+            "variable": item["variable"],
+            "query": query,
+            "search_mode": search_mode,
+            "candidates": candidates,
+        })
+
+    return searches
+
+
+def save_candidates(searches: list[dict], concepts_path: str | Path) -> Path:
+    """Enregistre les candidats SNOMED CT à côté du fichier de concepts dont ils viennent.
+
+    Le nom reprend celui du fichier de concepts : concepts_afaf0d45.json donne
+    candidates_afaf0d45.json. On sait ainsi toujours de quels concepts viennent les candidats.
+
+    Paramètres :
+        searches      : la liste renvoyée par search_concepts.
+        concepts_path : le chemin du fichier concepts_<id>.json lu en entrée.
+
+    Renvoie :
+        le chemin du fichier écrit.
+    """
+    concepts_path = Path(concepts_path)
+
+    # Même identifiant que le fichier de concepts (jamais le même nom : il n'est pas écrasé)
+    out_name = "candidates_" + concepts_path.name.removeprefix("concepts_")
+    out_path = concepts_path.parent / out_name
+
+    # Contenu : en-tête (fichier de concepts, ontologie) puis les recherches
+    output = {
+        "concepts_file": concepts_path.name,
+        "ontology": ONTOLOGY,
+        "searches": searches,
+    }
+    out_path.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
+    return out_path
+
+
+if __name__ == "__main__":
+    # Test manuel : lit un concepts_<id>.json produit par l'étape 2, puis interroge l'API
+    if len(sys.argv) != 2:
+        sys.exit("Usage : python src/bdd/search_snomed.py <chemin_de_concepts.json>")
+    concepts_path = Path(sys.argv[1])
+    data = json.loads(concepts_path.read_text(encoding="utf-8"))
+
+    searches = search_concepts(data["concepts"], get_api_key())
+
+    # Une ligne par variable : terme cherché, mode de recherche, premier candidat
+    print()
+    for search in searches:
+        first = "aucun candidat"
+        if search["candidates"]:
+            best = search["candidates"][0]
+            first = f"{best['snomed_id']} {best['label']} ({best['hierarchy']})"
+        print(f"{search['variable']:15} | {search['query']} | {search['search_mode']} | {first}")
+
+    out_path = save_candidates(searches, concepts_path)
+    print(f"\n{len(searches)} recherches enregistrées dans '{out_path}'")
