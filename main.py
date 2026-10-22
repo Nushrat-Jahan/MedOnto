@@ -14,6 +14,7 @@ import argparse
 from src.bdd.extract_variables import (load_dataset, load_readme, extract_labels, dataset_id,
                                        extract_variables, save_variables)
 from src.bdd.extract_concepts import extract_concepts, save_concepts
+from src.bdd.search_snomed import get_api_key, search_concepts, save_candidates
 
 
 def main():
@@ -24,6 +25,9 @@ def main():
     parser.add_argument("--label-row", action="store_true",
                         help="la ligne 2 du fichier contient les libellés des variables")
     args = parser.parse_args()
+
+    # Clé de l'API SNOMED CT (étape 3), vérifiée dès le début pour ne pas échouer après Qwen
+    api_key = get_api_key()
 
     # Étape 1 : extraction des variables
     print(f"-> Chargement de la base '{args.dataset}'...")
@@ -51,6 +55,11 @@ def main():
     concepts = extract_concepts(variables, readme)
     concepts_path = save_concepts(concepts, out_path.parent)
     print(f"-> Étape 2 : {len(concepts)} concepts proposés par Qwen dans '{concepts_path}'")
+
+    # Étape 3 : recherche des concepts proposés dans SNOMED CT (API BioPortal)
+    searches = search_concepts(concepts, api_key)
+    candidates_path = save_candidates(searches, concepts_path)
+    print(f"-> Étape 3 : candidats SNOMED CT de {len(searches)} variables dans '{candidates_path}'")
 
 
 if __name__ == "__main__":
