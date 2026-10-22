@@ -28,6 +28,7 @@ without conflicts.
 MedOnto/
 ├── README.md              ← project documentation (this file)
 ├── LICENSE
+├── main.py                ← entry point of the structured cohort data pipeline (src/bdd)
 └── src/
     ├── __init__.py
     ├── postprocess.py     ← shared entry point to standardize model outputs
@@ -38,11 +39,12 @@ MedOnto/
     │   ├── pipeline.py
     │   ├── preprocess.py
     │   └── spanextraction.py
-    ├── bdd/               ← track: structured cohort data
+    ├── bdd/               ← track: structured cohort data (status: src/bdd/README.md)
     │   ├── __init__.py
-    │   ├── task1.py
+    │   ├── README.md
     │   ├── extract_variables.py
-    │   └── build_ontology.py
+    │   ├── extract_concepts.py
+    │   └── search_snomed.py
     └── questions/         ← track: questionnaire and assessment data
         ├── __init__.py
         ├── extraction_qwen_automatisee.py
