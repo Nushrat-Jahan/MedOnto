@@ -20,6 +20,8 @@ Test rapide, depuis la racine du projet :
 import json
 import os
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from dotenv import load_dotenv
@@ -132,3 +134,36 @@ def search_once(query: str, key: str, exact: bool) -> list[dict]:
         })
 
     return candidates
+
+
+def search_candidates(query: str, key: str, exact: bool) -> list[dict]:
+    """Lance search_once, en réessayant en cas d'erreur passagère.
+
+    Si le serveur est surchargé (erreur 429, « trop de requêtes ») ou en panne (erreurs 500,
+    502, 503), ou si le réseau coupe, on attend puis on réessaie : 5 s, puis 10 s, puis on
+    abandonne. Une autre erreur (ex. 401 : clé refusée) arrête tout de suite les essais.
+
+    Paramètres :
+        query, key, exact : comme pour search_once.
+
+    Renvoie :
+        les candidats trouvés ; une liste vide si la recherche a échoué (message affiché).
+    """
+    for attempt in range(MAX_RETRIES):
+        try:
+            return search_once(query, key, exact)
+        except urllib.error.HTTPError as error:
+            # Erreur passagère du serveur : on attend et on réessaie
+            if error.code in (429, 500, 502, 503) and attempt < MAX_RETRIES - 1:
+                time.sleep(5 * (attempt + 1))
+                continue
+            print(f"   ERREUR HTTP {error.code} pour la recherche '{query}'")
+            return []
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
+            # Problème de réseau ou réponse illisible : on attend et on réessaie
+            if attempt < MAX_RETRIES - 1:
+                time.sleep(5 * (attempt + 1))
+                continue
+            print(f"   ERREUR pour la recherche '{query}' : {error}")
+            return []
+    return []
