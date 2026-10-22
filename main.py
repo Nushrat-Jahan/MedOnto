@@ -13,6 +13,7 @@ Les résultats sont écrits dans outputs/<nom_base>_<id>/.
 import argparse
 from src.bdd.extract_variables import (load_dataset, load_readme, extract_labels, dataset_id,
                                        extract_variables, save_variables)
+from src.bdd.extract_concepts import extract_concepts, save_concepts
 
 
 def main():
@@ -45,6 +46,11 @@ def main():
 
     out_path = save_variables(variables, args.dataset, ds_id, readme)
     print(f"-> Étape 1 : {len(variables)} variables extraites dans '{out_path}'")
+
+    # Étape 2 : un concept proposé par Qwen pour chaque variable
+    concepts = extract_concepts(variables, readme)
+    concepts_path = save_concepts(concepts, out_path.parent)
+    print(f"-> Étape 2 : {len(concepts)} concepts proposés par Qwen dans '{concepts_path}'")
 
 
 if __name__ == "__main__":
