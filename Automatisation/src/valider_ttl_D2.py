@@ -20,8 +20,12 @@ Contrôles :
 import csv
 from rdflib import Graph, Namespace, RDF, OWL
 
-TTL_FILE = "questionnaire_ontology_AUTO_D2.ttl"
-MATCH_CSV = "resultats_C2_match.csv"
+from pathlib import Path
+RES_DIR = Path(__file__).resolve().parent.parent / "result"
+RES_DIR.mkdir(exist_ok=True)
+
+TTL_FILE = RES_DIR / "questionnaire_ontology_AUTO_D2.ttl"
+MATCH_CSV = RES_DIR / "resultats_C2_match.csv"
 EX = Namespace("http://example.org/questionnaire-ontology#")
 
 # ---------- 1. Charger la décision de C2 (référence dynamique) ----------
@@ -37,7 +41,7 @@ ids_expecting_sameas = {sid for sid, ms in matches_by_id.items() if all(m == "Ex
 
 # ---------- 2. Syntaxe ----------
 g = Graph()
-g.parse(TTL_FILE, format="turtle")
+g.parse(str(TTL_FILE), format="turtle")
 print("RDF/Turtle parsed successfully.")
 print("Number of triples:", len(g))
 
