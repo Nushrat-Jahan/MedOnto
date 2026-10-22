@@ -17,6 +17,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 import ollama
 
+from pathlib import Path
+RES_DIR = Path(__file__).resolve().parent.parent / "result"
+RES_DIR.mkdir(exist_ok=True)
+
 MODEL = "qwen2.5:7b-instruct"
 MAX_WORKERS = 1  # parallélisme modéré (modèle 7B local)
 
@@ -196,12 +200,12 @@ def main():
 
     fieldnames = ["Source", "Concept", "Category", "Relation", "Evidence",
                   "SNOMED CT match", "Status", "Validation"]
-    with open("resultats_A2.csv", "w", newline="", encoding="utf-8-sig") as f:
+    with open(RES_DIR / "resultats_A2.csv", "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(rows)
 
-    with open("resultats_A2.json", "w", encoding="utf-8") as f:
+    with open(RES_DIR / "resultats_A2.json", "w", encoding="utf-8") as f:
         json.dump(raw_results, f, ensure_ascii=False, indent=2)
 
     print("\nTerminé. Résultats écrits dans resultats_A2.csv et resultats_A2.json")
