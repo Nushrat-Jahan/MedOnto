@@ -1,0 +1,19 @@
+﻿Item ID,Item text,Concept (A2),Manual SNOMED ID,Manual label,Rank-1 SNOMED ID,Rank-1 label,Rank-1 correct,Rank of manual concept among candidates,C2 SNOMED ID,C2 label,C2 match,C2 correct,Comparison
+phq2,"Feeling down, depressed, or hopeless",depression,366979004,Depressed mood,79842004,Stuporous depression,no,absent,310495003,Mild depression,Narrower,no,Both wrong
+phq4,Feeling tired or having little energy,fatigue,84229001,Fatigue,84229001,Fatigue,yes,1,84229001,Fatigue,Exact,yes,Both correct
+phq7,"Trouble concentrating on things, such as reading the newspaper or watching television",attention_deficit,26329005,Poor concentration,23148009,Undifferentiated attention deficit disorder,no,absent,31177006,"Attention deficit hyperactivity disorder, combined type",Narrower,no,Both wrong
+phq9,Thoughts that you would be better off dead or of hurting yourself in some way,suicidal ideation,6471006,Suicidal thoughts,460881000124101,No history of suicidal ideation,no,6,6471006,Suicidal thoughts,Exact,yes,"C2 choice correct, rank 1 wrong"
+gad1,"Feeling nervous, anxious, or on edge",anxiety,48694002,Anxiety,48694002,Anxiety,yes,1,48694002,Anxiety,Exact,yes,Both correct
+gad4,Trouble relaxing,anxiety,,(no SNOMED CT concept - Candidate Project Concept),48694002,Anxiety,no,n/a,,,No Match,yes,"C2 choice correct, rank 1 wrong"
+gad6,Becoming easily annoyed or irritable,irritability,55929007,Feeling irritable,844583007,Irritability postvaccinal,no,5,55929007,Feeling irritable,Exact,yes,"C2 choice correct, rank 1 wrong"
+epw4,As a passenger in a car for an hour without a break,daytime sleepiness,1367959007,Excessive daytime sleepiness,1367959007,Excessive daytime sleepiness,yes,1,,,No Match,no,"Rank 1 correct, C2 choice wrong"
+epw8,"In a car, while stopped for a few minutes in traffic",daytime sleepiness,1367959007,Excessive daytime sleepiness,1367959007,Excessive daytime sleepiness,yes,1,,,No Match,no,"Rank 1 correct, C2 choice wrong"
+,,,,,,,,,,,,,
+SUMMARY - items with a manual SNOMED concept,,,,,,,,,,,,,
+SUMMARY - rank 1 = manual concept,,,,,,,,,,,,,
+SUMMARY - C2 choice = manual concept,,,,,,,,,,,,,
+SUMMARY - manual concept present among the candidates (ceiling for C2),,,,,,,,,,,,,
+SUMMARY - items without SNOMED concept: rank 1 returns nothing (correct abstention),,,,,,,,,,,,,
+SUMMARY - items without SNOMED concept: C2 answers No Match (correct abstention),,,,,,,,,,,,,
+SUMMARY - items where C2 is better than rank 1,,,,,,,,,,,,,
+SUMMARY - items where C2 is worse than rank 1,,,,,,,,,,,,,
