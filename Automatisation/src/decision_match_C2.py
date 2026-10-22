@@ -26,12 +26,16 @@ from concurrent.futures import ThreadPoolExecutor
 
 import ollama
 
+from pathlib import Path
+RES_DIR = Path(__file__).resolve().parent.parent / "result"
+RES_DIR.mkdir(exist_ok=True)
+
 MODEL = "qwen2.5:7b-instruct"
 MAX_WORKERS = 1
 VALID_MATCHES = {"Exact", "Broader", "Narrower", "No Match"}
-INPUT_A2 = "resultats_A2.json"
-INPUT_B2 = "resultats_B2_candidats.csv"
-OUTPUT_CSV = "resultats_C2_match.csv"
+INPUT_A2 = RES_DIR / "resultats_A2.json"
+INPUT_B2 = RES_DIR / "resultats_B2_candidats.csv"
+OUTPUT_CSV = RES_DIR / "resultats_C2_match.csv"
 
 SYSTEM_PROMPT = """You are a clinical terminology matching judge.
 You receive (1) a questionnaire item and (2) a CLOSED list of real SNOMED CT
