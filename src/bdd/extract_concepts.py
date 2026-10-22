@@ -10,6 +10,8 @@ Test rapide, depuis la racine du projet :
     python src/bdd/extract_concepts.py "outputs/<nom_base>_<id>/variables.json"
 """
 
+import json
+import ollama
 import pandas as pd
 
 MODEL = "qwen2.5:7b"  # modèle installé localement dans Ollama (le même qu'en semaine 1)
@@ -106,3 +108,50 @@ def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
         lines.append(f"Example: {variable['example']}")
 
     return "\n".join(lines)
+
+
+def ask_qwen(user_prompt: str) -> str:
+    """Envoie le prompt système et le message d'une variable à Qwen, et renvoie sa réponse brute.
+
+    Qwen tourne en local via Ollama (le logiciel Ollama doit être lancé). Deux réglages :
+    - temperature=0 : Qwen choisit toujours le mot le plus probable, donc le même prompt
+      donne toujours la même réponse (résultats reproductibles) ;
+    - format="json" : Ollama oblige Qwen à répondre en JSON valide.
+
+    Paramètre :
+        user_prompt : le message rédigé par build_user_prompt.
+
+    Renvoie :
+        le texte de la réponse de Qwen, tel quel.
+    """
+    response = ollama.chat(
+        model=MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ],
+        options={"temperature": 0},
+        format="json",
+    )
+    return response["message"]["content"]
+
+
+def parse_concept(raw: str) -> dict | None:
+    """Transforme la réponse brute de Qwen en dictionnaire Python.
+
+    Paramètre :
+        raw : la réponse renvoyée par ask_qwen.
+
+    Renvoie :
+        le dictionnaire du concept, ex. {"item_id": "BIO_CRP", "concept_proposed": ..., ...} ;
+        None si la réponse n'est pas un objet JSON valide.
+    """
+    try:
+        concept = json.loads(raw)
+    except json.JSONDecodeError:
+        return None
+
+    # On attend un seul objet {...}, pas une liste ni un nombre
+    if not isinstance(concept, dict):
+        return None
+    return concept
