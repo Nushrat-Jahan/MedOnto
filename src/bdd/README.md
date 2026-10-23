@@ -23,17 +23,36 @@ tableau.
 
 ## Lancement
 
-Depuis la racine du projet :
+**Prérequis :**
+
+- Python 3.11 (version testée), avec les bibliothèques du pipeline :
+
+  ```bash
+  python -m pip install pandas openpyxl ollama python-dotenv
+  ```
+
+- [Ollama](https://ollama.com) installé en local, avec le modèle `qwen2.5:7b`
+  (`ollama pull qwen2.5:7b`). Qwen demande environ 5 Go de mémoire libre ;
+- une clé de l'API BioPortal dans un fichier `.env` à la racine du projet
+  (`BIOPORTAL_API_KEY=...`, jamais versionné).
+
+**Lancement**, depuis la racine du projet :
 
 ```bash
 python main.py "data/<ma_base>.csv"
 python main.py "data/<ma_base>.xlsx" --label-row    # si la ligne 2 contient les libellés des variables
 ```
 
-Prérequis : Python 3.11, les bibliothèques `pandas`, `openpyxl`, `ollama` et `python-dotenv`,
-[Ollama](https://ollama.com) installé en local avec le modèle `qwen2.5:7b`, et une clé de l'API
-BioPortal dans un fichier `.env` à la racine du projet (`BIOPORTAL_API_KEY=...`, jamais versionné).
-Les bases restent dans `data/`, qui n'est pas versionné.
+Sous Windows, quand plusieurs versions de Python sont installées, `python` peut lancer une version
+qui n'a pas ces bibliothèques (erreur `ModuleNotFoundError: No module named 'pandas'`). Il suffit
+alors de choisir la version avec le lanceur `py` :
+
+```bash
+py -3.11 main.py "data/<ma_base>.xlsx" --label-row
+```
+
+Les bases restent dans `data/`, qui n'est pas versionné. Sur un ordinateur sans carte graphique,
+compter environ 3 min 30 pour une base de 14 variables.
 
 Tous les résultats d'une base sont écrits dans son propre dossier, `outputs/<nom_base>_<id>/`, où
 `<id>` est calculé à partir des noms des colonnes :
