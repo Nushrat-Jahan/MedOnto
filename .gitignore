@@ -1,6 +1,9 @@
 # Données de cohorte (jamais versionnées)
 data/
 
+# Résultats du pipeline : dérivés des données, confidentiels (jamais versionnés)
+outputs/
+
 # Présentations personnelles (conservées en local uniquement)
 docs/Presentation_Olti*
 docs/*.pptx
