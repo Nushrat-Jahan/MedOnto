@@ -1,0 +1,19 @@
+You are given one variable of a structured health dataset (one column of a table), not a questionnaire item. Map it to the clinical concept that this column records.
+
+## Rules
+
+1. **Use all the information given.** The Context gives the variable name and, when available, its label, unit, type, possible values, range, example and the dataset documentation. The label and the values may be written in another language (e.g. French): `concept_proposed` and `synonyms` must always be in clinical English.
+
+2. **Name what the column records, not a disease it may be related to.** For example, a column of blood glucose values in mmol/L records a "glucose measurement", not "diabetes mellitus".
+
+3. **Yes/no variables.** For a yes/no variable, name what "yes" stands for.
+
+4. **Item ID.** `item_id` must be exactly the Item ID given in the Context (the variable name), unchanged.
+
+5. **Synonyms.** List the other names under which the same concept is commonly known in clinical English (e.g. "glycated hemoglobin" for "hemoglobin A1c"), including the full form of an abbreviation. Do not repeat `concept_proposed`.
+
+## Context
+
+{txt}
+
+## Output

@@ -4,8 +4,9 @@ Pour chaque variable de variables.json (étape 1), le script construit un prompt
 Qwen (en local via Ollama) et récupère sa proposition de concept au format JSON commun du projet :
 {"item_id", "concept_proposed", "category", "relation", "evidence", "synonyms"}.
 Le prompt système est le même pour toutes les parties du projet : il est lu dans
-configs/systems_prompt/system_prompt.txt. Seul le message de chaque variable est propre à la
-partie bdd.
+configs/systems_prompt/system_prompt.txt. Le message de chaque variable est propre à la partie
+bdd : c'est configs/systems_prompt/user_template_bdd.txt, où {txt} est remplacé par la
+description de la variable.
 Les variables sont envoyées une par une : un prompt court et une réponse simple, plus fiables
 pour un modèle de 7 milliards de paramètres.
 
@@ -27,6 +28,13 @@ MODEL = "qwen2.5:7b"  # modèle installé localement dans Ollama (le même qu'en
 SYSTEM_PROMPT_PATH = Path("configs/systems_prompt/system_prompt.txt")
 SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
 
+# Message propre à la partie bdd : les règles pour une variable, puis {txt} remplacé par sa description
+USER_TEMPLATE_PATH = Path("configs/systems_prompt/user_template_bdd.txt")
+USER_TEMPLATE = USER_TEMPLATE_PATH.read_text(encoding="utf-8")
+PLACEHOLDER = "{txt}"  # même repère que dans le user_template de la partie texte
+if PLACEHOLDER not in USER_TEMPLATE:
+    sys.exit(f"{USER_TEMPLATE_PATH} doit contenir le repère {PLACEHOLDER}")
+
 # Catégories autorisées dans la réponse de Qwen (même liste que dans le prompt système commun)
 CATEGORIES = ["finding", "symptom", "disorder", "behavior", "observable_entity", "assessment_scale"]
 
@@ -34,7 +42,10 @@ CATEGORIES = ["finding", "symptom", "disorder", "behavior", "observable_entity",
 def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
     """Rédige le message envoyé à Qwen pour une variable, à partir de sa fiche (étape 1).
 
-    Le message contient :
+    Le message est le user_template de la partie bdd (règles propres aux variables d'un
+    tableau), où le repère {txt} est remplacé par la description de la variable.
+
+    La description contient :
     - la documentation de la base (README), si elle existe, recopiée ligne par ligne ;
     - la description de la variable : nom, libellé, unité, type, valeurs possibles,
       intervalle et exemple. Seuls les champs renseignés sont écrits : une variable sans
@@ -43,7 +54,7 @@ def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
     Le nom de la variable est présenté comme son "Item ID" : le prompt système commun demande
     un champ "item_id", qui doit être le nom de la variable pour retrouver d'où vient le concept.
 
-    Exemple pour la variable BIO_CRP d'un modèle BIO :
+    Exemple de description pour la variable BIO_CRP d'un modèle BIO :
         Item ID (variable name): BIO_CRP
         Label: Bio. : CRP (mg/L)
         Unit: mg/L
@@ -84,7 +95,10 @@ def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
     if variable.get("example") is not None:
         lines.append(f"Example: {variable['example']}")
 
-    return "\n".join(lines)
+    description = "\n".join(lines)
+
+    # Message envoyé : le user_template, avec la description à la place de {txt}
+    return USER_TEMPLATE.replace(PLACEHOLDER, description)
 
 
 def ask_qwen(user_prompt: str) -> str:
@@ -200,10 +214,11 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) ->
     signalées par extract_concepts).
 
     Le fichier s'appelle concepts_<id du prompt>.json, où l'ID est l'empreinte SHA-1 du
-    prompt système, réduite à 8 caractères (même principe que dataset_id) :
-    - même prompt -> même fichier : comme temperature=0, la réponse est la même ;
-    - prompt modifié -> nouveau fichier : les résultats des anciens prompts sont conservés,
-      ce qui permet de comparer les versions du prompt.
+    prompt système et du user_template mis bout à bout, réduite à 8 caractères (même principe
+    que dataset_id) :
+    - mêmes prompts -> même fichier : comme temperature=0, la réponse est la même ;
+    - un des deux prompts modifié -> nouveau fichier : les résultats des anciens prompts sont
+      conservés, ce qui permet de comparer les versions des prompts.
 
     Paramètres :
         concepts    : la liste renvoyée par extract_concepts.
@@ -213,8 +228,9 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) ->
     Renvoie :
         le chemin du fichier écrit.
     """
-    # Identifiant du prompt système
-    prompt_id = hashlib.sha1(SYSTEM_PROMPT.encode("utf-8")).hexdigest()[:8]
+    # Identifiant des prompts : prompt système + user_template de la partie bdd
+    prompts = SYSTEM_PROMPT + USER_TEMPLATE
+    prompt_id = hashlib.sha1(prompts.encode("utf-8")).hexdigest()[:8]
 
     # On ne garde que les réponses valides de Qwen
     valid_concepts = []
