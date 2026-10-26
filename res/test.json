@@ -1,66 +1,66 @@
 {
   "aisc-team-a1/augmented-clinical-notes": [
     {
-      "item_id": "psychiatric_questionnaire_item_1",
-      "concept_proposed": "neck muscle contracture",
-      "category": "finding",
-      "relation": {
-        "predicate": "measures",
-        "target_concept": "muscle contracture"
-      },
-      "evidence": "The patient exhibits sustained and abnormal contraction of the neck muscles, pulling her head to the right in an upward direction.",
-      "status": "existing_concept"
-    },
-    {
-      "item_id": "patient_symptoms_and_diagnosis",
-      "concept_proposed": "chest pain",
-      "category": "finding",
+      "item_id": "context_item_1",
+      "concept_proposed": "neck dystonia",
+      "category": "disorder",
       "relation": null,
-      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "evidence": "The context describes a teenager presenting with neck and back discomfort, restricted body movements, abnormal neck and back positions, and abnormal muscle contractions. These symptoms.",
       "status": "existing_concept"
     },
     {
-      "item_id": "patient_symptoms_and_diagnosis",
-      "concept_proposed": "swelling right back",
-      "category": "finding",
+      "item_id": "patient_hip_joint_symptoms_and_cushing_syndrome",
+      "concept_proposed": "hip joint pain",
+      "category": "disorder",
       "relation": {
         "predicate": "measures",
-        "target_concept": "chest pain"
+        "target_concept": "cushing's syndrome"
       },
-      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "evidence": "The patient presented with hip joint pain, limited range of motion, central obesity, and muscle mass reduction, which led to suspicion of Cushing's syndrome. The.",
       "status": "existing_concept"
     },
     {
-      "item_id": "patient_symptoms_and_diagnosis",
-      "concept_proposed": "tumor thoracic wall",
-      "category": "finding",
+      "item_id": "patient_hip_joint_symptoms_and_cushing_syndrome",
+      "concept_proposed": "limited range of motion",
+      "category": "disorder",
       "relation": {
         "predicate": "measures",
-        "target_concept": "chest pain"
+        "target_concept": "cushing's syndrome"
       },
-      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "evidence": "The patient presented with hip joint pain, limited range of motion, central obesity, and muscle mass reduction, which led to suspicion of Cushing's syndrome. The.",
       "status": "existing_concept"
     },
     {
-      "item_id": "patient_symptoms_and_diagnosis",
-      "concept_proposed": "malignancy",
-      "category": "finding",
+      "item_id": "patient_hip_joint_symptoms_and_cushing_syndrome",
+      "concept_proposed": "muscle mass reduction",
+      "category": "disorder",
       "relation": {
         "predicate": "measures",
-        "target_concept": "chest pain"
+        "target_concept": "cushing's syndrome"
       },
-      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "evidence": "The patient presented with hip joint pain, limited range of motion, central obesity, and muscle mass reduction, which led to suspicion of Cushing's syndrome. The.",
       "status": "existing_concept"
     },
     {
-      "item_id": "patient_symptoms_and_diagnosis",
-      "concept_proposed": "biopsy",
-      "category": "finding",
+      "item_id": "patient_hip_joint_symptoms_and_cushing_syndrome",
+      "concept_proposed": "ectopic acth-producing tumor",
+      "category": "disorder",
       "relation": {
         "predicate": "measures",
-        "target_concept": "chest pain"
+        "target_concept": "cushing's syndrome"
       },
-      "evidence": "The patient reported chest pain and a swelling in the right back area, which led to further investigation including imaging studies.",
+      "evidence": "The patient presented with hip joint pain, limited range of motion, central obesity, and muscle mass reduction, which led to suspicion of Cushing's syndrome. The.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_hip_joint_symptoms_and_cushing_syndrome",
+      "concept_proposed": "laparoscopic partial adrenalectomy",
+      "category": "disorder",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "cushing's syndrome"
+      },
+      "evidence": "The patient presented with hip joint pain, limited range of motion, central obesity, and muscle mass reduction, which led to suspicion of Cushing's syndrome. The.",
       "status": "existing_concept"
     },
     {
@@ -68,18 +68,86 @@
       "concept_proposed": "cushing's syndrome",
       "category": "disorder",
       "relation": null,
-      "evidence": "The patient presented with hip joint pain, restricted range of motion, central obesity, muscle mass reduction, and later developed Cushing's syndrome. These symptoms suggest involvement.",
+      "evidence": "The patient presented with hip joint pain, limited range of motion, central obesity, and muscle mass reduction, which led to suspicion of Cushing's syndrome. The.",
       "status": "existing_concept"
     },
     {
       "item_id": "fall_followup",
-      "concept_proposed": "elbow arthroplasty",
+      "concept_proposed": "elbow arthrodesis complications",
+      "category": "disorder",
+      "relation": null,
+      "evidence": "The patient underwent a series of procedures including an elbow arthrodesis, followed by a nonunion, and ultimately a total elbow arthroplasty.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_24_day_old_baby_with_diaphragmatic_hernia_and_renal_cell_carcinoma",
+      "concept_proposed": "intrathoracic kidney",
+      "category": "disorder",
+      "relation": null,
+      "evidence": "The patient presented with a diaphragmatic hernia, an intrathoracic kidney, herniated large and small bowel, underwent a primary repair, and had a follow-up renal ultrasound.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_24_day_old_baby_with_diaphragmatic_hernia_and_renal_cell_carcinoma",
+      "concept_proposed": "primary repair",
       "category": "disorder",
       "relation": {
-        "predicate": "is_a",
-        "target_concept": "elbow arthroplasty procedure"
+        "predicate": "measures",
+        "target_concept": "intrathoracic kidney"
       },
-      "evidence": "The patient sought to convert his elbow arthrodesis to an arthroplasty due to dissatisfaction with the functional limitations caused by the nonunion.",
+      "evidence": "The patient presented with a diaphragmatic hernia, an intrathoracic kidney, herniated large and small bowel, underwent a primary repair, and had a follow-up renal ultrasound.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "patient_24_day_old_baby_with_diaphragmatic_hernia_and_renal_cell_carcinoma",
+      "concept_proposed": "renal ultrasound",
+      "category": "disorder",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "intrathoracic kidney"
+      },
+      "evidence": "The patient presented with a diaphragmatic hernia, an intrathoracic kidney, herniated large and small bowel, underwent a primary repair, and had a follow-up renal ultrasound.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "epworth_sleepiness_scale_item_1",
+      "concept_proposed": "general daytime sleepiness",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "sleepiness"
+      },
+      "evidence": "The context describes a situation where the patient experiences increased swelling and pain due to a vascular malformation, suggesting generalized daytime sleepiness.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "Urological_Screening_Questionnaire",
+      "concept_proposed": "gross hematuria",
+      "category": "finding",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "hematuria"
+      },
+      "evidence": "The patient experienced episodes of gross hematuria during various medical procedures and imaging studies.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "hip_injury_and_surgery",
+      "concept_proposed": "femoral neck fracture with dislocation of the femoral head into the pelvis",
+      "category": "disorder",
+      "relation": {
+        "predicate": "measures",
+        "target_concept": "hip fracture"
+      },
+      "evidence": "The patient sustained a femoral neck fracture with dislocation of the femoral head into the pelvis due to a severe hip injury.",
+      "status": "existing_concept"
+    },
+    {
+      "item_id": "palpitations_10_years_history",
+      "concept_proposed": "palpitations",
+      "category": "finding",
+      "relation": null,
+      "evidence": "The context describes a 49-year-old female presenting with recurrent palpitations for 10 years, indicating the presence of palpitations.",
       "status": "existing_concept"
     }
   ]

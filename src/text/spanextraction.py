@@ -64,7 +64,7 @@ def spanextraction(
                         row[input_length:], skip_special_tokens=True
                     ).strip()
 
-                    if _to_concepts(answer) is None:
+                    if not _to_concepts(answer):
                         n_invalid += 1
                         logger.warning(
                             "Invalid concept JSON for source %d, document %d. Raw answer: %r",

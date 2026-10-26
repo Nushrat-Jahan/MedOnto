@@ -17,7 +17,6 @@ CATEGORIES = {"finding", "symptom", "disorder", "behavior",
               "observable_entity", "assessment_scale"}
 PREDICATES = {"is_a", "has_associated_finding", "has_interpretation",
               "measures", "is_manifestation_of"}
-STATUSES = {"existing_concept", "candidate_project_concept"}
 MAX_EVIDENCE_WORDS = 25
 
 
@@ -28,7 +27,6 @@ class Concept(NamedTuple):
     predicate: Optional[str]
     target_concept: Optional[str]
     evidence: str
-    status: str
 
     @property
     def subject(self) -> str:
@@ -52,7 +50,6 @@ class Concept(NamedTuple):
                 "target_concept": self.target_concept,
             },
             "evidence": self.evidence,
-            "status": self.status,
         }
 
 
@@ -152,10 +149,9 @@ def _to_concepts(raw: Union[str, dict, None]) -> list[Concept]:
 
     item_id = str(data.get("item_id") or "").strip()
     category = normalize(data.get("category"))
-    status = normalize(data.get("status"))
     evidence = _truncate_words((data.get("evidence") or "").strip())
 
-    if not item_id or category not in CATEGORIES or status not in STATUSES or not evidence:
+    if not item_id or category not in CATEGORIES or not evidence:
         return []
 
     predicate, target = None, None
@@ -180,7 +176,7 @@ def _to_concepts(raw: Union[str, dict, None]) -> list[Concept]:
         rel_t = target if target != concept else None
 
         extracted_concepts.append(
-            Concept(item_id, concept, category, rel_p, rel_t, evidence, status)
+            Concept(item_id, concept, category, rel_p, rel_t, evidence)
         )
 
     return extracted_concepts
@@ -237,8 +233,6 @@ def _clean(outputs: list, threshold: float = 0.85) -> list[Concept]:
     cleaned = _clean_list(outputs)
     if not cleaned:
         return []
-
-    cleaned.sort(key=lambda c: c.status != "existing_concept")
 
     seen, unique = set(), []
     for c in cleaned:

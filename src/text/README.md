@@ -79,7 +79,8 @@ code still runs, but the semantic-density filter and the stopword cleanup are de
 | `configs/systems_prompt/system_prompt.txt` | System prompt. |
 | `configs/systems_prompt/user_template.txt` | User prompt. **Must contain the `{txt}` placeholder**, otherwise `load_tokenizer_and_prompts` raises a `ValueError`. |
 
-The prompt asks the model for a strict JSON object per document:
+The prompt asks the model for a strict JSON object per document, based only on the supplied
+medical context (terminology matching is not part of the extraction step):
 
 ```json
 {
@@ -87,8 +88,7 @@ The prompt asks the model for a strict JSON object per document:
   "concept_proposed": "...",
   "category": "finding | symptom | disorder | behavior | observable_entity | assessment_scale",
   "relation": { "predicate": "...", "target_concept": "..." },
-  "evidence": "...",
-  "status": "existing_concept | candidate_project_concept"
+  "evidence": "..."
 }
 ```
 
@@ -238,8 +238,8 @@ Shared module `src/postprocess.py`:
 
 - lowercases and normalizes whitespace, removes punctuation, stopwords, anonymized tokens
   (`___`), digit-only strings and lab-value patterns;
-- drops exact duplicates on the `(concept_proposed, category)` pair, keeping the
-  `existing_concept` entries first;
+- drops exact duplicates on the `(concept_proposed, category)` pair, keeping the first
+  occurrence;
 - embeds the remaining concepts with `emilyalsentzer/Bio_ClinicalBERT` and removes concepts
   whose cosine similarity is **above** `similarity_threshold`.
 
@@ -259,8 +259,7 @@ single document:
         "predicate": "measures",
         "target_concept": "right back swelling"
       },
-      "evidence": "The patient reported chest pain and swelling in the right back area, indicating these symptoms.",
-      "status": "existing_concept"
+      "evidence": "The patient reported chest pain and swelling in the right back area, indicating these symptoms."
     }
   ]
 }
