@@ -1,11 +1,14 @@
-"""Point d'entrée du pipeline : de la base de données structurée au fragment d'ontologie.
+"""Point d'entrée de la partie bdd : de la base de données structurée au fragment d'ontologie.
 
-Enchaîne les étapes du pipeline dans l'ordre, en appelant les fonctions des modules de src/.
+Enchaîne les étapes du pipeline dans l'ordre, en appelant les fonctions des modules de src/bdd/.
 Les étapes sont ajoutées au fur et à mesure qu'elles sont développées.
 
-Lancement, depuis la racine du projet :
-    python main.py "data/<ma_base>.csv"
-    python main.py "data/<ma_base>.xlsx" --label-row   (si la ligne 2 contient les libellés)
+Lancement, depuis la racine du projet (même principe que la partie texte, src/text/pipeline.py) :
+    python -m src.bdd.pipeline "data/<ma_base>.csv"
+    python -m src.bdd.pipeline "data/<ma_base>.xlsx" --label-row   (si la ligne 2 contient les libellés)
+
+"python src/bdd/pipeline.py" ne fonctionne pas : les imports "from src.bdd..." ne sont trouvés
+que si Python est lancé depuis la racine du projet avec -m.
 
 Les résultats sont écrits dans outputs/<nom_base>_<id>/.
 """

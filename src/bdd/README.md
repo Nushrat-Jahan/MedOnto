@@ -39,16 +39,20 @@ tableau.
 **Lancement**, depuis la racine du projet :
 
 ```bash
-python main.py "data/<ma_base>.csv"
-python main.py "data/<ma_base>.xlsx" --label-row    # si la ligne 2 contient les libellés des variables
+python -m src.bdd.pipeline "data/<ma_base>.csv"
+python -m src.bdd.pipeline "data/<ma_base>.xlsx" --label-row    # si la ligne 2 contient les libellés des variables
 ```
+
+Le point d'entrée est [`pipeline.py`](pipeline.py), lancé avec `-m` comme celui de la partie texte
+(`python -m src.text.pipeline`). `python src/bdd/pipeline.py` ne fonctionne pas : les imports
+`from src.bdd...` ne sont trouvés que depuis la racine du projet.
 
 Sous Windows, quand plusieurs versions de Python sont installées, `python` peut lancer une version
 qui n'a pas ces bibliothèques (erreur `ModuleNotFoundError: No module named 'pandas'`). Il suffit
 alors de choisir la version avec le lanceur `py` :
 
 ```bash
-py -3.11 main.py "data/<ma_base>.xlsx" --label-row
+py -3.11 -m src.bdd.pipeline "data/<ma_base>.xlsx" --label-row
 ```
 
 Les bases restent dans `data/`, qui n'est pas versionné. Sur un ordinateur sans carte graphique,

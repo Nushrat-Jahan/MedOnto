@@ -28,7 +28,6 @@ without conflicts.
 MedOnto/
 ├── README.md              ← project documentation (this file)
 ├── LICENSE
-├── main.py                ← entry point of the structured cohort data pipeline (src/bdd)
 └── src/
     ├── __init__.py
     ├── postprocess.py     ← shared entry point to standardize model outputs
@@ -42,6 +41,7 @@ MedOnto/
     ├── bdd/               ← track: structured cohort data (status: src/bdd/README.md)
     │   ├── __init__.py
     │   ├── README.md
+    │   ├── pipeline.py    ← entry point: python -m src.bdd.pipeline "data/<dataset>"
     │   ├── extract_variables.py
     │   ├── extract_concepts.py
     │   └── search_snomed.py
