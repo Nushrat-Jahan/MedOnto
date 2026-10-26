@@ -31,6 +31,7 @@ documents (PDF/TXT/HF stream)
    ▼
 preprocess()  ──►  clean_text()          → mojibake fix, NFC, hyphen repair, whitespace
                  └─►  TextFilter (GLiNER) → keep only entity-rich documents
+                 └─►  span filtering       → keep sentences containing detected entities
                  └─►  build_prompt()      → chat template with the {txt} placeholder
                  └─►  DataLoader[]        → one loader per local file, one for the HF stream
    │
@@ -216,6 +217,10 @@ by the document, and the messages are rendered with `tokenizer.apply_chat_templa
   density (share of the words covered by an entity) is `>= threshold_density`. With
   `stopwords=True`, stopwords are removed from both the numerator and the denominator of the
   density. Filtered-out documents are logged and never reach the LLM.
+- **Span filtering** (`filter_text_by_spans`): the entities already detected by GLiNER during
+  document filtering are reused to keep only the sentences/lines that contain a detected span.
+  The LLM therefore receives a shorter, entity-focused document, which speeds up generation
+  without running GLiNER a second time. This step is skipped when `not_filtering=True`.
 - **Truncation** (`truncate_text_to_budget`): only the *document text* is truncated so that the
   whole prompt fits in `max_length` tokens; the template and the generation header stay intact.
 - **Batching**: each local file becomes its own `DataLoader` containing one document, so the

@@ -33,6 +33,7 @@ _LINE_BREAK_HYPHEN_RE = re.compile(r"-\n[ ]*(?=[a-záéíóúüñ])")
 _SPACES_RE = re.compile(r"[ \t]+")
 _LINE_EDGE_SPACES_RE = re.compile(r" ?\n ?")
 _MULTIPLE_NEWLINES_RE = re.compile(r"\n{3,}")
+_SPAN_SENTENCE_RE = re.compile(r"[^\n]+?(?:[.!?]+(?=\s+[A-Z])|\n|$)")
 
 Entity = dict[str, Any]
 
@@ -123,6 +124,36 @@ def compute_density_semantic(
     return n_entity_tokens / n_tokens
 
 
+def filter_text_by_spans(text: str, entities: list[Entity]) -> str:
+    """Keep only sentences/lines that contain at least one detected entity span.
+
+    The entities are the ones already produced by the GLiNER filter, so no extra
+    model pass is required. Keeping their surrounding sentence preserves enough
+    context for the LLM while reducing the prompt size.
+    """
+    if not entities:
+        return text
+
+    spans = [
+        (int(entity["start"]), int(entity["end"]))
+        for entity in entities
+        if "start" in entity and "end" in entity
+    ]
+    if not spans:
+        return text
+
+    kept: list[str] = []
+    for match in _SPAN_SENTENCE_RE.finditer(text):
+        start, end = match.span()
+        if any(start < span_end and end > span_start for span_start, span_end in spans):
+            sentence = match.group().strip()
+            if sentence:
+                kept.append(sentence)
+
+    # Never drop the whole document because of an offset mismatch.
+    return " ".join(kept) if kept else text
+
+
 @dataclass
 class TextFilter:
     """Décide si un texte est assez riche en entités pour être gardé."""
@@ -133,12 +164,17 @@ class TextFilter:
     threshold_density: float = THRESHOLD_DENSITY_DEFAULT
     ignore_stopwords: bool = False
 
-    def __call__(self, text: str) -> bool:
+    def evaluate(self, text: str) -> tuple[bool, list[Entity]]:
+        """Return the keep decision and the entities used to make it."""
         entities = predict_entities(text, self.model, self.labels)
         score = compute_average_semantic_score(entities)
         density = compute_density_semantic(entities, text, self.ignore_stopwords)
         keep = score >= self.threshold_score and density >= self.threshold_density
         logger.debug("score=%.3f density=%.3f keep=%s", score, density, keep)
+        return keep, entities
+
+    def __call__(self, text: str) -> bool:
+        keep, _entities = self.evaluate(text)
         return keep
 
 
@@ -304,8 +340,11 @@ class SpanExtractionDatasetHuggingFace(IterableDataset):
     def __iter__(self) -> Iterator[dict[str, torch.Tensor]]:
         for row in self.stream:
             text = clean_text(row[self.column_name])
-            if self.text_filter is not None and not self.text_filter(text):
-                continue
+            if self.text_filter is not None:
+                keep, entities = self.text_filter.evaluate(text)
+                if not keep:
+                    continue
+                text = filter_text_by_spans(text, entities)
             yield encode_document(
                 self.tokenizer,
                 text,
@@ -340,6 +379,9 @@ def preprocess(
     écartés par le filtre n'y figurent pas.
 
     `stopwords=True` : les stopwords sont ignorés dans le calcul de la densité.
+
+    Quand le filtrage est actif, les entités GLiNER calculées pour la décision
+    sont réutilisées pour ne garder que les phrases contenant un span détecté.
     """
     text_filter = None if not_filtering else load_text_filter(gliner_model_path, stopwords)
 
@@ -356,9 +398,12 @@ def preprocess(
             raw = load_pdf_file(path) if is_pdf(path) else load_txt_file(path)
             text = clean_text(raw)
 
-            if text_filter is not None and not text_filter(text):
-                logger.info("Document %s écarté par le filtre.", path)
-                continue
+            if text_filter is not None:
+                keep, entities = text_filter.evaluate(text)
+                if not keep:
+                    logger.info("Document %s écarté par le filtre.", path)
+                    continue
+                text = filter_text_by_spans(text, entities)
 
             dataset = SpanExtractionDataset(
                 [Document(text=text)],
