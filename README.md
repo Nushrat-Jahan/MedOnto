@@ -58,12 +58,59 @@ MedOnto/
   outputs of the model through it, so that all results share the same format before verification:
   text normalization (lowercase, whitespace) and removal of meaningless items (punctuation,
   stopwords, anonymized tokens, digits only, blacklisted terms, lab-value patterns).
-- **`verification.py`** will contain the **common logic to validate or reject the outputs of Qwen**:
-  structure checks, mandatory fields, verification against SNOMED CT and assignment of a validation
-  status (Correct / Incorrect / Uncertain). It currently contains documentation only.
+- **`verification.py`** implements the **shared SNOMED CT verification pipeline**. Each extracted
+  concept is checked with a three-step fallback sequence and receives a structured result
+  (`concept`, `in_snomed`, `verification_step`). The results are aggregated into a pandas DataFrame.
 - **`utils.py`** gathers the **shared helper functions** used by every track: reading text, PDF,
   TOML and JSON files, writing JSON files, parsing concept and triplet lists from raw model output,
   and the common `Triplet` structure (subject, relation, object).
+
+### Verification pipeline (`src/verification.py`)
+
+For each concept produced by the extraction stage, the worker applies the following fallback
+sequence:
+
+1. **Direct SNOMED lookup.** The proposed concept is queried against SNOMED CT through the
+   BioPortal API. If a real SNOMED identifier is returned, verification stops at **step 1**.
+2. **Synonym lookup and child refinement.** If step 1 fails, the `synonyms` list emitted by the
+   span-extraction task is checked one by one. When a synonym matches, the pipeline retrieves the
+   children of the matched SNOMED concept and compares them with the original proposed concept
+   using the clinical embedding model. It descends the hierarchy as long as a child is more similar
+   to the original concept, then keeps the best child; if no child is closer, the matched synonym is
+   kept. This remains **step 2**.
+3. **Embedding fallback.** If no synonym matches, the original concept is passed to the custom
+   hierarchical embedding search over SNOMED. The closest concept is accepted when its cosine
+   similarity reaches `embedding_threshold` (default `0.90`). This is **step 3**.
+
+If no match is found at any step, the original proposed concept is returned with `in_snomed = 0`.
+`verification_step` is then `3`, because that is where the final negative decision is made.
+
+Each worker returns a JSON-serializable record:
+
+| Field | Description |
+|---|---|
+| `concept` | Final matching concept name, or the original proposed concept if no match was found |
+| `in_snomed` | `1` if a match was found at any step, otherwise `0` |
+| `verification_step` | Step that determined the result: `1`, `2`, or `3` |
+
+The worker results are aggregated into a pandas DataFrame with the columns:
+
+| Column | Description |
+|---|---|
+| `Source Dataset` | Source JSON key or dataset name |
+| `Item ID` | Extracted item identifier |
+| `Concept (A2)` | Original proposed concept |
+| `Matched Concept` | Concept retained after verification |
+| `Is in SNOMED` | `1` if matched at any step, otherwise `0` |
+| `Verification Step` | `1`, `2`, or `3` |
+
+The pipeline requires a `BIOPORTAL_API_KEY` in the `.env` file and can be run from the project root:
+
+```bash
+python -m src.verification --data res/test.json
+```
+
+The final output is the verification DataFrame.
 
 ### Track packages
 
@@ -89,7 +136,8 @@ line or as a Python function.
 - **Reference terminology:** SNOMED CT only. When no appropriate concept exists, the concept is
   recorded as a **Candidate Project Concept**.
 - **Semantic technologies:** RDF, OWL
-- **Validation:** Correct / Incorrect / Uncertain
+- **Validation:** automatic SNOMED CT verification (`in_snomed`, `verification_step`), followed by
+  manual review status Correct / Incorrect / Uncertain
 
 LLM-generated concepts and identifiers are never accepted automatically: they must be verified.
 

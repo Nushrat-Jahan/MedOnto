@@ -271,6 +271,21 @@ The key of each entry is the source path (or the dataset name for a Hugging Face
 `relation` is `null` when the model did not provide a valid predicate/target pair.
 `synonyms` contains a list of alternative terms for `concept_proposed` (empty array if none).
 
+### 6. Downstream verification — `src/verification.py`
+
+The JSON output is consumed by the shared verification pipeline, which applies a three-step
+fallback for every concept:
+
+1. **Direct SNOMED lookup** of `concept_proposed`.
+2. **Synonym lookup** using the `synonyms` list. When a synonym matches, the children of the
+   matched SNOMED concept are compared with the original concept using embeddings; the most
+   relevant child is kept when it is closer than the synonym.
+3. **Embedding fallback** on the original concept when no synonym matches.
+
+The verifier returns `concept`, `in_snomed`, and `verification_step`, then aggregates the results
+into a pandas DataFrame. See the [root README](../../README.md#verification-pipeline-srcverificationpy)
+for the full workflow and output columns.
+
 ## Behaviour and gotchas
 
 - **Empty results are reported, not raised.** If the filter removes every document the pipeline
