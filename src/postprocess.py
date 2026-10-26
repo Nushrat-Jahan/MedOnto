@@ -27,6 +27,7 @@ class Concept(NamedTuple):
     predicate: Optional[str]
     target_concept: Optional[str]
     evidence: str
+    synonyms: list[str] = []
 
     @property
     def subject(self) -> str:
@@ -50,6 +51,7 @@ class Concept(NamedTuple):
                 "target_concept": self.target_concept,
             },
             "evidence": self.evidence,
+            "synonyms": self.synonyms or [],
         }
 
 
@@ -165,10 +167,24 @@ def _to_concepts(raw: Union[str, dict, None]) -> list[Concept]:
     raw_concepts_str = str(data.get("concept_proposed") or "")
     split_concepts = [c.strip() for c in raw_concepts_str.split(",") if c.strip()]
 
+    raw_synonyms = data.get("synonyms") or []
+    synonyms_list: list[str] = []
+    if isinstance(raw_synonyms, list):
+        for s in raw_synonyms:
+            if not isinstance(s, str):
+                continue
+            syn = normalize(str(s).replace("_", " "))
+            if not syn or syn == normalize(raw_concepts_str.replace("_", " ")):
+                continue
+            if should_skip(syn):
+                continue
+            if syn not in synonyms_list:
+                synonyms_list.append(syn)
+
     extracted_concepts: list[Concept] = []
     for raw_c in split_concepts:
         concept = normalize(raw_c.replace("_", " "))
-        
+
         if should_skip(concept):
             continue
 
@@ -176,7 +192,7 @@ def _to_concepts(raw: Union[str, dict, None]) -> list[Concept]:
         rel_t = target if target != concept else None
 
         extracted_concepts.append(
-            Concept(item_id, concept, category, rel_p, rel_t, evidence)
+            Concept(item_id, concept, category, rel_p, rel_t, evidence, synonyms_list)
         )
 
     return extracted_concepts

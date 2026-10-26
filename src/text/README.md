@@ -87,8 +87,9 @@ medical context (terminology matching is not part of the extraction step):
   "item_id": "...",
   "concept_proposed": "...",
   "category": "finding | symptom | disorder | behavior | observable_entity | assessment_scale",
-  "relation": { "predicate": "...", "target_concept": "..." },
-  "evidence": "..."
+  "relation": { "predicate": "...", "target_concept": "..." } or null,
+  "evidence": "...",
+  "synonyms": ["...", "..."]
 }
 ```
 
@@ -259,7 +260,8 @@ single document:
         "predicate": "measures",
         "target_concept": "right back swelling"
       },
-      "evidence": "The patient reported chest pain and swelling in the right back area, indicating these symptoms."
+      "evidence": "The patient reported chest pain and swelling in the right back area, indicating these symptoms.",
+      "synonyms": ["thoracic pain", "pain in chest"]
     }
   ]
 }
@@ -267,6 +269,7 @@ single document:
 
 The key of each entry is the source path (or the dataset name for a Hugging Face run).
 `relation` is `null` when the model did not provide a valid predicate/target pair.
+`synonyms` contains a list of alternative terms for `concept_proposed` (empty array if none).
 
 ## Behaviour and gotchas
 

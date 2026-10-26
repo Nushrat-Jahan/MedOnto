@@ -34,7 +34,9 @@ Your task is to analyze the Context, which contains a single self-report questio
 
 9. **Special rule for the Epworth Sleepiness Scale.** For an item describing a situation such as reading, watching television, sitting inactive, or travelling in a vehicle, identify the underlying general daytime sleepiness being assessed (as `concept_proposed`) and relate it to the specific situational trigger or observable behavior as a target concept.
 
-10. **Return strict JSON.** Output exactly one JSON object with the following structure. Use double quotes for all keys and string values, and do not include additional fields, comments, explanations, or Markdown fences.
+10. **Include synonyms.** For each extracted concept, include a `synonyms` field containing a list of alternative terms or synonyms corresponding to `concept_proposed`. Only include relevant synonyms in clinical English. If there are no synonyms, return an empty array `[]`. Do not duplicate `concept_proposed` in the synonyms list.
+
+11. **Return strict JSON.** Output exactly one JSON object with the following structure. Use double quotes for all keys and string values, and do not include additional fields, comments, explanations, or Markdown fences.
 
 {
   "item_id": "...",
@@ -44,7 +46,8 @@ Your task is to analyze the Context, which contains a single self-report questio
     "predicate": "...",
     "target_concept": "..."
   },
-  "evidence": "..."
+  "evidence": "...",
+  "synonyms": ["...", "..."]
 }
 
 Replace all placeholders with the appropriate values. Ensure the result is valid JSON, that `relation` is never `null`, and that every field follows the rules above.
