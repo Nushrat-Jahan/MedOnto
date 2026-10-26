@@ -1,0 +1,15 @@
+{
+  "aisc-team-a1/augmented-clinical-notes": [
+    {
+      "item_id": "self_report_questionnaire_item_1",
+      "concept_proposed": "neck dystonia",
+      "category": "finding",
+      "relation": null,
+      "evidence": "The patient exhibits sustained abnormal contractions of the neck muscles leading to restricted body movements, abnormal head positioning, and difficulty maintaining an upright posture.",
+      "synonyms": [
+        "neck spasms",
+        "neck tremors"
+      ]
+    }
+  ]
+}
