@@ -1,8 +1,11 @@
 """Étape 2 du pipeline : extraction des concepts par Qwen, à partir des variables extraites.
 
 Pour chaque variable de variables.json (étape 1), le script construit un prompt, l'envoie à
-Qwen (en local via Ollama) et récupère sa proposition de concept au format commun du projet :
-{"item_id", "concept_proposed", "category", "relation", "evidence", "status"}.
+Qwen (en local via Ollama) et récupère sa proposition de concept au format JSON commun du projet :
+{"item_id", "concept_proposed", "category", "relation", "evidence", "synonyms"}.
+Le prompt système est le même pour toutes les parties du projet : il est lu dans
+configs/systems_prompt/system_prompt.txt. Seul le message de chaque variable est propre à la
+partie bdd.
 Les variables sont envoyées une par une : un prompt court et une réponse simple, plus fiables
 pour un modèle de 7 milliards de paramètres.
 
@@ -19,45 +22,13 @@ import pandas as pd
 
 MODEL = "qwen2.5:7b"  # modèle installé localement dans Ollama (le même qu'en semaine 1)
 
-# Valeurs autorisées dans la réponse de Qwen (mêmes listes que dans SYSTEM_PROMPT)
-CATEGORIES = ["procedure", "observable_entity", "finding", "disorder", "substance", "qualifier_value"]
-STATUSES = ["existing_concept", "candidate_project_concept"]
+# Prompt système commun à toutes les parties du projet (le même que la partie texte).
+# Chemin relatif : les scripts se lancent depuis la racine du projet.
+SYSTEM_PROMPT_PATH = Path("configs/systems_prompt/system_prompt.txt")
+SYSTEM_PROMPT = SYSTEM_PROMPT_PATH.read_text(encoding="utf-8")
 
-SYSTEM_PROMPT = """You are a clinical terminology assistant. You map one variable of a structured
-health dataset (one column of a table) to a standardized biomedical concept (SNOMED CT semantics).
-You do not have live access to SNOMED CT. You must NOT invent SNOMED CT codes.
-Instead, propose the concept in precise medical English, as it would appear as a SNOMED CT
-preferred term, so that it can be searched in SNOMED CT afterwards.
-
-Rules:
-1. Use everything you are given: the variable name, its label, unit, type and values, and the
-   dataset documentation. The label and the values may be written in another language
-   (e.g. French): the proposed concept must always be in English.
-2. Name what the column records, not a disease it may be related to. For example, a column of
-   blood glucose values in mmol/L records a "glucose measurement", not "diabetes mellitus".
-3. For a yes/no variable, name what "yes" stands for.
-4. "category" must be exactly one of these SNOMED CT hierarchies:
-   procedure, observable_entity, finding, disorder, substance, qualifier_value.
-   A laboratory test or measurement is a procedure.
-5. "relation" is optional: propose one only if it is clearly supported by the variable,
-   otherwise use null. Use the form {"predicate": "...", "target_concept": "..."} with
-   "predicate" chosen from: is_a, has_associated_finding, has_interpretation, measures,
-   is_manifestation_of. The target_concept must be different from concept_proposed.
-6. "evidence" must be ONE short sentence (25 words maximum) explaining why the concept fits
-   the variable.
-7. If you are not confident that a standard SNOMED CT concept exists, set "status" to
-   "candidate_project_concept" instead of guessing.
-8. Output strictly valid JSON, with no preamble and no markdown fences.
-
-Return exactly this JSON structure:
-{
-  "item_id": "<the variable name>",
-  "concept_proposed": "...",
-  "category": "...",
-  "relation": {"predicate": "...", "target_concept": "..."} or null,
-  "evidence": "...",
-  "status": "existing_concept" or "candidate_project_concept"
-}"""
+# Catégories autorisées dans la réponse de Qwen (même liste que dans le prompt système commun)
+CATEGORIES = ["finding", "symptom", "disorder", "behavior", "observable_entity", "assessment_scale"]
 
 
 def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
@@ -69,8 +40,11 @@ def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
       intervalle et exemple. Seuls les champs renseignés sont écrits : une variable sans
       libellé n'a pas de ligne "Label".
 
+    Le nom de la variable est présenté comme son "Item ID" : le prompt système commun demande
+    un champ "item_id", qui doit être le nom de la variable pour retrouver d'où vient le concept.
+
     Exemple pour la variable BIO_CRP d'un modèle BIO :
-        Variable name: BIO_CRP
+        Item ID (variable name): BIO_CRP
         Label: Bio. : CRP (mg/L)
         Unit: mg/L
         Type: numeric
@@ -96,7 +70,7 @@ def build_user_prompt(variable: dict, readme: list[dict] | None = None) -> str:
         lines.append("")
 
     # Description de la variable : seulement les champs renseignés
-    lines.append(f"Variable name: {variable['name']}")
+    lines.append(f"Item ID (variable name): {variable['name']}")
     if variable.get("label") is not None:
         lines.append(f"Label: {variable['label']}")
     if variable.get("unit") is not None:
@@ -165,8 +139,9 @@ def extract_concepts(variables: list[dict], readme: list[dict] | None = None) ->
 
     Les identifiants (ex. numéro de patient) sont ignorés : ce ne sont pas des variables
     médicales. Les réponses de Qwen ne sont jamais corrigées par le script. Celles qui sortent
-    du format demandé (JSON invalide, catégorie ou statut hors liste) sont signalées à l'écran,
-    pour être revérifiées à la main.
+    du format demandé (JSON invalide, item_id différent du nom de la variable, catégorie hors
+    liste, synonyms qui n'est pas une liste) sont signalées à l'écran, pour être revérifiées
+    à la main.
 
     Pour chaque variable, on garde tout ce qui permet de refaire et de vérifier l'expérience :
     le message envoyé, la réponse brute de Qwen et le concept lu dans cette réponse.
@@ -196,10 +171,12 @@ def extract_concepts(variables: list[dict], readme: list[dict] | None = None) ->
         if concept is None:
             print("   ATTENTION : la réponse n'est pas un JSON valide")
         else:
+            if concept.get("item_id") != variable["name"]:
+                print(f"   ATTENTION : item_id différent du nom de la variable -> {concept.get('item_id')}")
             if concept.get("category") not in CATEGORIES:
                 print(f"   ATTENTION : catégorie hors liste -> {concept.get('category')}")
-            if concept.get("status") not in STATUSES:
-                print(f"   ATTENTION : statut hors liste -> {concept.get('status')}")
+            if not isinstance(concept.get("synonyms"), list):
+                print(f"   ATTENTION : synonyms n'est pas une liste -> {concept.get('synonyms')}")
 
         concepts.append({
             "variable": variable["name"],
@@ -211,8 +188,16 @@ def extract_concepts(variables: list[dict], readme: list[dict] | None = None) ->
     return concepts
 
 
-def save_concepts(concepts: list[dict], dataset_dir: str | Path) -> Path:
-    """Enregistre les concepts proposés par Qwen dans le dossier de la base.
+def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) -> Path:
+    """Enregistre les concepts proposés par Qwen au format JSON commun à tout le projet.
+
+    C'est le même format que la partie texte (src/text/pipeline.py), pour que la vérification
+    commune puisse lire les résultats de toutes les parties :
+        {"<source>": [concept, concept, ...]}
+    où chaque concept est la réponse de Qwen telle quelle :
+        {"item_id", "concept_proposed", "category", "relation", "evidence", "synonyms"}.
+    Les réponses qui ne sont pas un JSON valide ne sont pas écrites (elles ont déjà été
+    signalées par extract_concepts).
 
     Le fichier s'appelle concepts_<id du prompt>.json, où l'ID est l'empreinte SHA-1 du
     prompt système, réduite à 8 caractères (même principe que dataset_id) :
@@ -220,11 +205,10 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path) -> Path:
     - prompt modifié -> nouveau fichier : les résultats des anciens prompts sont conservés,
       ce qui permet de comparer les versions du prompt.
 
-    Le fichier contient en en-tête le modèle et le prompt système exact, puis les concepts.
-
     Paramètres :
         concepts    : la liste renvoyée par extract_concepts.
         dataset_dir : le dossier de la base, ex. outputs/<nom_base>_<id>/ (celui de variables.json).
+        source      : le nom de la base, utilisé comme clé du JSON (ex. "data/ma_base.xlsx").
 
     Renvoie :
         le chemin du fichier écrit.
@@ -232,12 +216,14 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path) -> Path:
     # Identifiant du prompt système
     prompt_id = hashlib.sha1(SYSTEM_PROMPT.encode("utf-8")).hexdigest()[:8]
 
-    # Contenu : en-tête (modèle, prompt) puis les concepts
-    output = {
-        "model": MODEL,
-        "system_prompt": SYSTEM_PROMPT,
-        "concepts": concepts,
-    }
+    # On ne garde que les réponses valides de Qwen
+    valid_concepts = []
+    for item in concepts:
+        if item["concept"] is not None:
+            valid_concepts.append(item["concept"])
+
+    # Format commun : le nom de la base comme clé, la liste de ses concepts comme valeur
+    output = {source: valid_concepts}
 
     out_path = Path(dataset_dir) / f"concepts_{prompt_id}.json"
     out_path.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -253,11 +239,13 @@ if __name__ == "__main__":
 
     concepts = extract_concepts(data["variables"], data.get("readme"))
 
-    # Une ligne par variable : concept proposé, catégorie, statut
+    # Une ligne par variable : concept proposé, catégorie, synonymes
     print()
     for item in concepts:
-        concept = item["concept"] or {}
-        print(f"{item['variable']:25} | {concept.get('concept_proposed')} | {concept.get('category')} | {concept.get('status')}")
+        concept = item["concept"]
+        if concept is None:
+            concept = {}
+        print(f"{item['variable']:25} | {concept.get('concept_proposed')} | {concept.get('category')} | {concept.get('synonyms')}")
 
-    out_path = save_concepts(concepts, variables_path.parent)
+    out_path = save_concepts(concepts, variables_path.parent, data["dataset"])
     print(f"\n{len(concepts)} concepts enregistrés dans '{out_path}'")

@@ -53,7 +53,7 @@ def main():
 
     # Étape 2 : un concept proposé par Qwen pour chaque variable
     concepts = extract_concepts(variables, readme)
-    concepts_path = save_concepts(concepts, out_path.parent)
+    concepts_path = save_concepts(concepts, out_path.parent, args.dataset)
     print(f"-> Étape 2 : {len(concepts)} concepts proposés par Qwen dans '{concepts_path}'")
 
     # Étape 3 : recherche des concepts proposés dans SNOMED CT (API BioPortal)
