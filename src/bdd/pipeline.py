@@ -18,6 +18,13 @@ from src.bdd.extract_variables import (load_dataset, load_readme, extract_labels
                                        extract_variables, save_variables)
 from src.bdd.extract_concepts import extract_concepts, save_concepts
 from src.bdd.search_snomed import get_api_key, search_concepts, save_candidates
+from src.postprocess import postprocess
+from src.utils import make_json_from_concepts
+
+# Seuil de ressemblance au-dessus duquel le postprocess commun supprime un concept comme doublon.
+# 1.0 : aucune suppression. Dans un tableau, chaque colonne est une variable différente ; avec le
+# seuil par défaut (0.85), des examens différents (neutrophiles, lymphocytes...) étaient supprimés.
+SIMILARITY_THRESHOLD = 1.0
 
 
 def main():
@@ -56,8 +63,18 @@ def main():
 
     # Étape 2 : un concept proposé par Qwen pour chaque variable
     concepts = extract_concepts(variables, readme)
-    concepts_path = save_concepts(concepts, out_path.parent, args.dataset)
-    print(f"-> Étape 2 : {len(concepts)} concepts proposés par Qwen dans '{concepts_path}'")
+
+    # Nettoyage commun des réponses de Qwen (src/postprocess.py), comme dans la partie texte.
+    # postprocess reçoit une liste de groupes de réponses : ici un seul groupe, la base.
+    raw_outputs = []
+    for item in concepts:
+        raw_outputs.append(item["raw_output"])
+    clean_concepts = postprocess([raw_outputs], threshold=SIMILARITY_THRESHOLD)[0]
+    print(f"-> Postprocess : {len(clean_concepts)} concepts gardés sur {len(concepts)}")
+
+    clean_dicts = make_json_from_concepts(clean_concepts)
+    concepts_path = save_concepts(clean_dicts, out_path.parent, args.dataset)
+    print(f"-> Étape 2 : {len(clean_dicts)} concepts au format commun dans '{concepts_path}'")
 
     # Étape 3 : recherche des concepts proposés dans SNOMED CT (API BioPortal)
     searches = search_concepts(concepts, api_key)

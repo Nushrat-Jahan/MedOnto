@@ -203,15 +203,13 @@ def extract_concepts(variables: list[dict], readme: list[dict] | None = None) ->
 
 
 def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) -> Path:
-    """Enregistre les concepts proposés par Qwen au format JSON commun à tout le projet.
+    """Enregistre les concepts au format JSON commun à tout le projet.
 
     C'est le même format que la partie texte (src/text/pipeline.py), pour que la vérification
     commune puisse lire les résultats de toutes les parties :
         {"<source>": [concept, concept, ...]}
-    où chaque concept est la réponse de Qwen telle quelle :
+    où chaque concept a les champs :
         {"item_id", "concept_proposed", "category", "relation", "evidence", "synonyms"}.
-    Les réponses qui ne sont pas un JSON valide ne sont pas écrites (elles ont déjà été
-    signalées par extract_concepts).
 
     Le fichier s'appelle concepts_<id du prompt>.json, où l'ID est l'empreinte SHA-1 du
     prompt système et du user_template mis bout à bout, réduite à 8 caractères (même principe
@@ -221,7 +219,9 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) ->
       conservés, ce qui permet de comparer les versions des prompts.
 
     Paramètres :
-        concepts    : la liste renvoyée par extract_concepts.
+        concepts    : la liste des concepts au format commun : ceux nettoyés par le postprocess
+                      commun (dans pipeline.py), ou les réponses valides de Qwen (test seul de
+                      ce fichier, sans postprocess).
         dataset_dir : le dossier de la base, ex. outputs/<nom_base>_<id>/ (celui de variables.json).
         source      : le nom de la base, utilisé comme clé du JSON (ex. "data/ma_base.xlsx").
 
@@ -232,14 +232,8 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) ->
     prompts = SYSTEM_PROMPT + USER_TEMPLATE
     prompt_id = hashlib.sha1(prompts.encode("utf-8")).hexdigest()[:8]
 
-    # On ne garde que les réponses valides de Qwen
-    valid_concepts = []
-    for item in concepts:
-        if item["concept"] is not None:
-            valid_concepts.append(item["concept"])
-
     # Format commun : le nom de la base comme clé, la liste de ses concepts comme valeur
-    output = {source: valid_concepts}
+    output = {source: concepts}
 
     out_path = Path(dataset_dir) / f"concepts_{prompt_id}.json"
     out_path.write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -263,5 +257,11 @@ if __name__ == "__main__":
             concept = {}
         print(f"{item['variable']:25} | {concept.get('concept_proposed')} | {concept.get('category')} | {concept.get('synonyms')}")
 
-    out_path = save_concepts(concepts, variables_path.parent, data["dataset"])
-    print(f"\n{len(concepts)} concepts enregistrés dans '{out_path}'")
+    # Test seul : pas de postprocess, on enregistre les réponses valides de Qwen telles quelles
+    valid_concepts = []
+    for item in concepts:
+        if item["concept"] is not None:
+            valid_concepts.append(item["concept"])
+
+    out_path = save_concepts(valid_concepts, variables_path.parent, data["dataset"])
+    print(f"\n{len(valid_concepts)} concepts enregistrés dans '{out_path}'")
