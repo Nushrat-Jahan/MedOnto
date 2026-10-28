@@ -1,7 +1,12 @@
-"""Point d'entrée de la partie bdd : de la base de données structurée au fragment d'ontologie.
+"""Point d'entrée de la partie bdd : de la base de données structurée au JSON commun.
 
-Enchaîne les étapes du pipeline dans l'ordre, en appelant les fonctions des modules de src/bdd/.
-Les étapes sont ajoutées au fur et à mesure qu'elles sont développées.
+Enchaîne les étapes de l'extraction dans l'ordre, en appelant les fonctions des modules de src/bdd/ :
+étape 1, les variables de la base ; étape 2, les concepts proposés par Qwen, nettoyés par le
+postprocess commun et écrits au format JSON commun.
+
+Comme pour la partie texte, le pipeline s'arrête là : la recherche dans SNOMED CT fait partie de
+la vérification, commune à toutes les parties (src/verification.py), qui se lance à part sur le
+fichier produit.
 
 Lancement, depuis la racine du projet (même principe que la partie texte, src/text/pipeline.py) :
     python -m src.bdd.pipeline "data/<ma_base>.csv"
@@ -17,7 +22,6 @@ import argparse
 from src.bdd.extract_variables import (load_dataset, load_readme, extract_labels, dataset_id,
                                        extract_variables, save_variables)
 from src.bdd.extract_concepts import extract_concepts, save_concepts
-from src.bdd.search_snomed import get_api_key, search_concepts, save_candidates
 from src.postprocess import postprocess
 from src.utils import make_json_from_concepts
 
@@ -35,9 +39,6 @@ def main():
     parser.add_argument("--label-row", action="store_true",
                         help="la ligne 2 du fichier contient les libellés des variables")
     args = parser.parse_args()
-
-    # Clé de l'API SNOMED CT (étape 3), vérifiée dès le début pour ne pas échouer après Qwen
-    api_key = get_api_key()
 
     # Étape 1 : extraction des variables
     print(f"-> Chargement de la base '{args.dataset}'...")
@@ -75,11 +76,6 @@ def main():
     clean_dicts = make_json_from_concepts(clean_concepts)
     concepts_path = save_concepts(clean_dicts, out_path.parent, args.dataset)
     print(f"-> Étape 2 : {len(clean_dicts)} concepts au format commun dans '{concepts_path}'")
-
-    # Étape 3 : recherche des concepts proposés dans SNOMED CT (API BioPortal)
-    searches = search_concepts(concepts, api_key)
-    candidates_path = save_candidates(searches, concepts_path)
-    print(f"-> Étape 3 : candidats SNOMED CT de {len(searches)} variables dans '{candidates_path}'")
 
 
 if __name__ == "__main__":

@@ -43,8 +43,7 @@ MedOnto/
     │   ├── README.md
     │   ├── pipeline.py    ← entry point: python -m src.bdd.pipeline "data/<dataset>"
     │   ├── extract_variables.py
-    │   ├── extract_concepts.py
-    │   └── search_snomed.py
+    │   └── extract_concepts.py
     └── questions/         ← track: questionnaire and assessment data
         ├── __init__.py
         ├── extraction_qwen_automatisee.py
