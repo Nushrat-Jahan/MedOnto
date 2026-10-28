@@ -1,25 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Version séquentielle (UN SEUL processus) de src/verification.py.
+Version séquentielle (un seul) processus) de src/verification.py.
 
-Pourquoi : src/verification.py lance un processus par cœur du processeur, et chacun
-recharge torch. Sur un ordinateur avec peu de mémoire, Windows renvoie alors
-« WinError 1455 : le fichier de pagination est insuffisant ».
-
-Ce script réutilise TELLES QUELLES les fonctions du groupe (recherche BioPortal,
+Ce script réutilise telle quelles les fonctions du groupe (recherche BioPortal,
 filtre sémantique) ; seule la boucle parallèle est remplacée par une boucle simple.
 src/verification.py n'est pas modifié.
 
-Entrée  : un ou plusieurs JSON via --data (comme src/verification.py) ;
-          sans --data, res/questions/concepts_questions.json
-Sorties : bilan affiché + res/questions/verification_snomed.csv
-
-À lancer depuis la RACINE du dépôt :
-    python -m src.questions.verification_questions
-    python -m src.questions.verification_questions --data fichier1.json fichier2.json
-
-Sur un ordinateur avec assez de mémoire, le script commun src/verification.py
-(mêmes arguments --data) donne les mêmes résultats.
 """
 
 import argparse
