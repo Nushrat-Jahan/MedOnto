@@ -1,0 +1,19 @@
+﻿item_id,concept_proposed,category,relation,evidence,synonyms
+phq1,loss of interest,symptom,,"The item asks about a lack of interest or pleasure in activities, which is a core symptom of depression.",
+phq2,depressive mood,symptom,,"The item asks about feeling down, depressed, or hopeless, which directly indicates a depressive mood.",depressed affect; mood disturbance
+phq3,insomnia symptoms,symptom,,"The item describes difficulties with sleep onset, maintenance, or excessive sleep, which are core components of insomnia.",
+phq4,fatigue,symptom,,"The item asks about feeling tired or having little energy, which is a common symptom of depression.",exhaustion; lethargy
+phq5,appetite disturbance,symptom,,"The item inquires about poor appetite or overeating, indicating a change in eating habits, which is a symptom of depression.",altered appetite; eating disturbance
+phq6,self-criticism,symptom,,"The item asks about feelings of failure and letting oneself or family down, indicating self-criticism.",
+phq7,difficulty concentrating,symptom,,"The item asks about trouble concentrating on tasks like reading or watching TV, indicating difficulty focusing.",
+phq8,psychomotor agitation or retardation,finding,,"The item describes both slowed movements and restlessness, which are characteristic of psychomotor agitation or retardation.",
+phq9,suicidal ideation,symptom,,"The item asks about thoughts of being better off dead or hurting oneself, which is a direct measure of suicidal ideation.",
+gad1,anxiety,symptom,,"The item directly asks about feeling nervous, anxious, or on edge, which are core symptoms of anxiety.",
+gad2,difficulty in controlling worry,symptom,,"The item focuses on the inability to stop or control worrying, which is a symptom of anxiety.",
+gad3,excessive worry,symptom,,"The item asks about frequent worrying about various things, indicating excessive worry.",
+gad4,restlessness,symptom,,"The item asks about difficulty relaxing, which indicates a state of being agitated or restless.",
+gad5,restlessness,symptom,,"The item describes difficulty sitting still, indicating a state of restlessness.",
+gad6,irritability,symptom,,"The item directly asks about becoming easily annoyed or irritable, which is a symptom of anxiety.",
+gad7,anticipatory anxiety,symptom,is_a -> anxiety,"The item describes a fear of future negative events, which aligns with anticipatory anxiety.",
+epw4,daytime sleepiness,finding,,"The item assesses the likelihood of dozing off during a passive, non-stimulating activity, indicating daytime sleepiness.",
+epw8,daytime sleepiness,finding,,"The item probes the likelihood of dozing off in a car, which directly measures daytime sleepiness.",
