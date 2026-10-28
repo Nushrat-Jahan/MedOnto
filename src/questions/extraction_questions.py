@@ -1,19 +1,3 @@
-
-"""
-Extraction des concepts cliniques des items de questionnaires (PHQ-9, GAD-7, ESS)
-avec Qwen2.5-7B-Instruct (Ollama), en utilisant le prompt et le post-traitement
-communs au groupe.
-
-Entrées :
-  - configs/systems_prompt/system_prompt.txt   
-  - src/questions/items.json               
-Sorties (dans res/questions/) :
-  - concepts_questions.json   (item_id, concept_proposed, category, relation,
-                               evidence, synonyms)
-  - concepts_questions.csv    (mêmes champs, à plat)
-
-"""
-
 import csv
 import hashlib
 import json
@@ -28,18 +12,18 @@ from src.utils import load_json_file, load_txt_file, write_json_file
 MODEL = "qwen2.5:7b-instruct"
 OPTIONS = {
     "temperature": 0,    # sortie stable et reproductible
-    "num_predict": 400,  # plafond de longueur de la réponse (le JSON attendu fait ~150 jetons)
+    "num_predict": 400,  
 }
-KEEP_ALIVE = "30m"       # garde le modèle en mémoire entre deux items (et deux lancements proches)
+KEEP_ALIVE = "30m"     
  
-HERE = Path(__file__).resolve().parent          # .../src/questions
-ROOT = HERE.parents[1]                          # racine du dépôt
+HERE = Path(__file__).resolve().parent         
+ROOT = HERE.parents[1]                          
 PROMPT_FILE = ROOT / "configs" / "systems_prompt" / "system_prompt.txt"
 ITEMS_FILE = HERE / "items.json"
 OUT_DIR = ROOT / "res" / "questions"
 OUT_JSON = OUT_DIR / "concepts_questions.json"
 OUT_CSV = OUT_DIR / "concepts_questions.csv"
-CACHE_FILE = OUT_DIR / "raw_outputs_cache.json"  # réponses brutes de Qwen, item par item
+CACHE_FILE = OUT_DIR / "raw_outputs_cache.json" 
  
 CSV_FIELDS = ["item_id", "concept_proposed", "category", "relation", "evidence", "synonyms"]
  
@@ -89,7 +73,6 @@ def ask_qwen(system_prompt: str, item: dict, user_prompt: str):
         return None
     if not isinstance(data, dict):
         return None
-    # L'identifiant vient du fichier d'items, jamais du modèle
     data["item_id"] = item["item_id"]
     return data
  
@@ -150,9 +133,6 @@ def main() -> None:
                 save_cache(signature, cache)  # sauvegarde après chaque item
         raw_outputs.append(raw)
  
-    # UN GROUPE PAR ITEM : postprocess supprime les doublons à l'intérieur d'un groupe.
-    # Si tous les items étaient dans le même groupe, deux items au même concept
-    # (epw4 / epw8) fusionneraient et l'un disparaîtrait.
     cleaned = postprocess([[raw] for raw in raw_outputs])
  
     results, missing = [], []
