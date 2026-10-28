@@ -1,0 +1,38 @@
+{
+  "PHQ-9": {
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "items": [
+      {"item_id": "phq1", "question": "Little interest or pleasure in doing things"},
+      {"item_id": "phq2", "question": "Feeling down, depressed, or hopeless"},
+      {"item_id": "phq3", "question": "Trouble falling or staying asleep, or sleeping too much"},
+      {"item_id": "phq4", "question": "Feeling tired or having little energy"},
+      {"item_id": "phq5", "question": "Poor appetite or overeating"},
+      {"item_id": "phq6", "question": "Feeling bad about yourself—or that you are a failure or have let yourself or your family down"},
+      {"item_id": "phq7", "question": "Trouble concentrating on things, such as reading the newspaper or watching television"},
+      {"item_id": "phq8", "question": "Moving or speaking so slowly that other people could have noticed? Or the opposite—being so fidgety or restless that you have been moving around a lot more than usual"},
+      {"item_id": "phq9", "question": "Thoughts that you would be better off dead or of hurting yourself in some way"}
+    ]
+  },
+  "GAD-7": {
+    "response_type": "Likert 4 points - frequency over the past 2 weeks",
+    "scale": "0=Not at all, 1=Several days, 2=More than half the days, 3=Nearly every day",
+    "items": [
+      {"item_id": "gad1", "question": "Feeling nervous, anxious, or on edge"},
+      {"item_id": "gad2", "question": "Not being able to stop or control worrying"},
+      {"item_id": "gad3", "question": "Worrying too much about different things"},
+      {"item_id": "gad4", "question": "Trouble relaxing"},
+      {"item_id": "gad5", "question": "Being so restless that it is hard to sit still"},
+      {"item_id": "gad6", "question": "Becoming easily annoyed or irritable"},
+      {"item_id": "gad7", "question": "Feeling afraid as if something awful might happen"}
+    ]
+  },
+  "Epworth Sleepiness Scale": {
+    "response_type": "Likert 4 points - how likely the person is to doze off or fall asleep in this situation (sleepiness, as opposed to feeling merely tired)",
+    "scale": "0=Would never doze, 1=Slight chance of dozing, 2=Moderate chance of dozing, 3=High chance of dozing",
+    "items": [
+      {"item_id": "epw4", "question": "As a passenger in a car for an hour without a break"},
+      {"item_id": "epw8", "question": "In a car, while stopped for a few minutes in traffic"}
+    ]
+  }
+}
