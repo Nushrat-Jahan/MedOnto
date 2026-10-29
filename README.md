@@ -38,9 +38,8 @@ MedOnto/
     │   ├── pipeline.py
     │   ├── preprocess.py
     │   └── spanextraction.py
-    ├── bdd/               ← track: structured cohort data (status: src/bdd/README.md)
+    ├── bdd/               ← track: structured cohort data
     │   ├── __init__.py
-    │   ├── README.md
     │   ├── pipeline.py    ← entry point: python -m src.bdd.pipeline "data/<dataset>"
     │   ├── extract_variables.py
     │   └── extract_concepts.py
