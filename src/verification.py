@@ -136,6 +136,66 @@ def search_exact(term: str, api_key: str) -> dict | None:
     return None
 
 
+def verify_exact(data: dict, api_key: str) -> dict:
+    """Étapes 1 et 2 de la vérification : recherche exacte du concept, puis de ses synonymes.
+
+    Pour chaque concept du JSON commun :
+    1. on cherche "concept_proposed" avec search_exact ;
+    2. s'il n'est pas trouvé, on cherche ses synonymes un par un, et on s'arrête au premier
+       synonyme trouvé.
+
+    Chaque concept garde tous ses champs, et on lui ajoute le résultat de la vérification.
+
+    Paramètres :
+        data    : le contenu du JSON commun, {"<source>": [concept, ...]}.
+        api_key : la clé de l'API BioPortal (renvoyée par get_api_key).
+
+    Renvoie :
+        le même format {"<source>": [concept, ...]}, où chaque concept a 4 champs en plus :
+            "found_by"     : "concept", "synonym" ou "not_found" ;
+            "matched_term" : le terme qui a été trouvé (le concept ou le synonyme), sinon None ;
+            "snomed_id"    : l'identifiant SNOMED CT trouvé, ex. "767002", sinon None ;
+            "snomed_label" : le nom officiel dans SNOMED CT, sinon None.
+    """
+    results = {}
+
+    for source, concepts in data.items():
+        results[source] = []
+
+        for concept in concepts:
+            # Copie du concept, avec le résultat "pas trouvé" par défaut
+            result = concept.copy()
+            result["found_by"] = "not_found"
+            result["matched_term"] = None
+            result["snomed_id"] = None
+            result["snomed_label"] = None
+
+            # 1. Le concept lui-même
+            term = concept["concept_proposed"]
+            found = search_exact(term, api_key)
+            if found is not None:
+                result["found_by"] = "concept"
+                result["matched_term"] = term
+                result["snomed_id"] = found["snomed_id"]
+                result["snomed_label"] = found["label"]
+
+            # 2. Sinon, ses synonymes un par un : on s'arrête au premier trouvé
+            if found is None:
+                for synonym in concept.get("synonyms", []):
+                    found = search_exact(synonym, api_key)
+                    if found is not None:
+                        result["found_by"] = "synonym"
+                        result["matched_term"] = synonym
+                        result["snomed_id"] = found["snomed_id"]
+                        result["snomed_label"] = found["label"]
+                        break
+
+            print(f"  {concept['item_id']} ({term}) : {result['found_by']}")
+            results[source].append(result)
+
+    return results
+
+
 def check_concept_in_snomed(query: str, config: dict) -> int:
     """Première version : dit si l'API renvoie au moins un concept SNOMED CT pour ce terme.
 
