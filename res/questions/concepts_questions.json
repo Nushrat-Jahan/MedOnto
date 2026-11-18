@@ -1,0 +1,158 @@
+[
+  {
+    "item_id": "phq1",
+    "concept_proposed": "loss of interest",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about a lack of interest or pleasure in activities, which is a core symptom of depression.",
+    "synonyms": []
+  },
+  {
+    "item_id": "phq2",
+    "concept_proposed": "depressive mood",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about feeling down, depressed, or hopeless, which directly indicates a depressive mood.",
+    "synonyms": [
+      "depressed affect",
+      "mood disturbance"
+    ]
+  },
+  {
+    "item_id": "phq3",
+    "concept_proposed": "insomnia symptoms",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item describes difficulties with sleep onset, maintenance, or excessive sleep, which are core components of insomnia.",
+    "synonyms": []
+  },
+  {
+    "item_id": "phq4",
+    "concept_proposed": "fatigue",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about feeling tired or having little energy, which is a common symptom of depression.",
+    "synonyms": [
+      "exhaustion",
+      "lethargy"
+    ]
+  },
+  {
+    "item_id": "phq5",
+    "concept_proposed": "appetite disturbance",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item inquires about poor appetite or overeating, indicating a change in eating habits, which is a symptom of depression.",
+    "synonyms": [
+      "altered appetite",
+      "eating disturbance"
+    ]
+  },
+  {
+    "item_id": "phq6",
+    "concept_proposed": "self-criticism",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about feelings of failure and letting oneself or family down, indicating self-criticism.",
+    "synonyms": []
+  },
+  {
+    "item_id": "phq7",
+    "concept_proposed": "difficulty concentrating",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about trouble concentrating on tasks like reading or watching TV, indicating difficulty focusing.",
+    "synonyms": []
+  },
+  {
+    "item_id": "phq8",
+    "concept_proposed": "psychomotor agitation or retardation",
+    "category": "finding",
+    "relation": null,
+    "evidence": "The item describes both slowed movements and restlessness, which are characteristic of psychomotor agitation or retardation.",
+    "synonyms": []
+  },
+  {
+    "item_id": "phq9",
+    "concept_proposed": "suicidal ideation",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about thoughts of being better off dead or hurting oneself, which is a direct measure of suicidal ideation.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad1",
+    "concept_proposed": "anxiety",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item directly asks about feeling nervous, anxious, or on edge, which are core symptoms of anxiety.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad2",
+    "concept_proposed": "difficulty in controlling worry",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item focuses on the inability to stop or control worrying, which is a symptom of anxiety.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad3",
+    "concept_proposed": "excessive worry",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about frequent worrying about various things, indicating excessive worry.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad4",
+    "concept_proposed": "restlessness",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item asks about difficulty relaxing, which indicates a state of being agitated or restless.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad5",
+    "concept_proposed": "restlessness",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item describes difficulty sitting still, indicating a state of restlessness.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad6",
+    "concept_proposed": "irritability",
+    "category": "symptom",
+    "relation": null,
+    "evidence": "The item directly asks about becoming easily annoyed or irritable, which is a symptom of anxiety.",
+    "synonyms": []
+  },
+  {
+    "item_id": "gad7",
+    "concept_proposed": "anticipatory anxiety",
+    "category": "symptom",
+    "relation": {
+      "predicate": "is_a",
+      "target_concept": "anxiety"
+    },
+    "evidence": "The item describes a fear of future negative events, which aligns with anticipatory anxiety.",
+    "synonyms": []
+  },
+  {
+    "item_id": "epw4",
+    "concept_proposed": "daytime sleepiness",
+    "category": "finding",
+    "relation": null,
+    "evidence": "The item assesses the likelihood of dozing off during a passive, non-stimulating activity, indicating daytime sleepiness.",
+    "synonyms": []
+  },
+  {
+    "item_id": "epw8",
+    "concept_proposed": "daytime sleepiness",
+    "category": "finding",
+    "relation": null,
+    "evidence": "The item probes the likelihood of dozing off in a car, which directly measures daytime sleepiness.",
+    "synonyms": []
+  }
+]

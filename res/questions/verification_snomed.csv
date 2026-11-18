@@ -1,0 +1,19 @@
+﻿Source Dataset,Item ID,Concept (A2),Is in SNOMED,Semantic filter
+default,phq1,loss of interest,1,n/a
+default,phq2,depressive mood,1,n/a
+default,phq3,insomnia symptoms,1,n/a
+default,phq4,fatigue,1,n/a
+default,phq5,appetite disturbance,1,n/a
+default,phq6,self-criticism,1,n/a
+default,phq7,difficulty concentrating,1,n/a
+default,phq8,psychomotor agitation or retardation,1,n/a
+default,phq9,suicidal ideation,1,n/a
+default,gad1,anxiety,1,n/a
+default,gad2,difficulty in controlling worry,1,n/a
+default,gad3,excessive worry,1,n/a
+default,gad4,restlessness,1,n/a
+default,gad5,restlessness,1,n/a
+default,gad6,irritability,1,n/a
+default,gad7,anticipatory anxiety,1,n/a
+default,epw4,daytime sleepiness,1,n/a
+default,epw8,daytime sleepiness,1,n/a
