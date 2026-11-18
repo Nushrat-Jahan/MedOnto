@@ -63,6 +63,49 @@ def get_api_key() -> str:
     return key
 
 
+def search_exact(term: str, api_key: str) -> dict | None:
+    """Cherche un terme dans SNOMED CT en recherche exacte (API BioPortal).
+
+    La recherche exacte ne renvoie un concept que si son nom, ou un de ses synonymes, est
+    exactement le terme cherché (les majuscules ne comptent pas). Contrairement à la recherche
+    large, elle ne renvoie jamais un concept qui ressemble seulement au terme : un concept
+    trouvé ici peut être accepté tel quel.
+
+    On garde l'identifiant SNOMED CT du concept trouvé et son nom officiel : on peut ainsi
+    vérifier le résultat, et plus tard relier la variable à SNOMED CT dans l'ontologie.
+
+    Paramètres :
+        term    : le terme à chercher, ex. "white blood cell count".
+        api_key : la clé de l'API BioPortal (renvoyée par get_api_key).
+
+    Renvoie :
+        {"snomed_id": "767002", "label": "White blood cell count"} si un concept est trouvé ;
+        None sinon.
+    """
+    # Adresse de la recherche : le terme, l'ontologie SNOMED CT, et la recherche exacte
+    params = {
+        "q": term,
+        "ontologies": DEFAULT_CONFIG["ontology"],
+        "require_exact_match": "true",
+        "include": "prefLabel",
+    }
+    url = DEFAULT_CONFIG["api_url"] + "?" + urllib.parse.urlencode(params)
+
+    # Envoi de la requête : la clé passe dans l'en-tête (elle n'apparaît pas dans l'adresse)
+    request = urllib.request.Request(url, headers={"Authorization": "apikey token=" + api_key})
+    with urllib.request.urlopen(request, timeout=DEFAULT_CONFIG["timeout"]) as response:
+        data = json.load(response)
+
+    # Premier résultat qui est un vrai concept SNOMED CT : son adresse finit par son identifiant,
+    # ex. "http://purl.bioontology.org/ontology/SNOMEDCT/767002" -> "767002"
+    for concept in data.get("collection", []):
+        snomed_id = concept["@id"].split("/")[-1]
+        if snomed_id.isdigit():
+            return {"snomed_id": snomed_id, "label": concept.get("prefLabel")}
+
+    return None
+
+
 def check_concept_in_snomed(query: str, config: dict) -> int:
     params = urllib.parse.urlencode({
         "q": query,
