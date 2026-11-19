@@ -1,0 +1,67 @@
+"""Point d'entrée de la vérification commune : du JSON commun aux concepts SNOMED CT.
+
+Enchaîne les étapes de la vérification dans l'ordre, en appelant les fonctions de
+src/verification/snomed_check.py :
+  étapes 1-2 : recherche exacte du concept, puis de ses synonymes (verify_exact) ;
+  étape 3    : l'API propose des concepts, Qwen choisit (verify_llm).
+Le résultat est écrit à côté du fichier des concepts : concepts_<id>_verification.json.
+
+Lancement, depuis la racine du projet, avec Ollama ouvert :
+    python -m src.verification.pipeline "outputs/<nom_base>_<id>/concepts_<id>.json"
+"""
+
+import argparse
+import json
+from pathlib import Path
+
+from src.verification.snomed_api import get_api_key
+from src.verification.snomed_check import save_verification, verify_exact, verify_llm
+
+
+def main() -> None:
+    """Lance la vérification sur un fichier au format JSON commun, puis affiche un résumé."""
+    # Argument : le fichier JSON commun produit par une extraction
+    parser = argparse.ArgumentParser(description="Vérification commune des concepts dans SNOMED CT")
+    parser.add_argument("concepts", help="fichier JSON commun, ex. outputs/<base>_<id>/concepts_<id>.json")
+    args = parser.parse_args()
+
+    concepts_path = Path(args.concepts)
+    if not concepts_path.is_file():
+        raise SystemExit(f"Fichier introuvable : {concepts_path}")
+
+    with open(concepts_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Une simple liste de concepts (sans source) est rangée sous la source "default"
+    if isinstance(data, list):
+        data = {"default": data}
+
+    api_key = get_api_key()
+
+    print("Étapes 1-2 : recherche exacte du concept, puis de ses synonymes")
+    results = verify_exact(data, api_key)
+
+    print("Étape 3 : l'API propose des concepts, Qwen choisit")
+    results = verify_llm(results, api_key)
+
+    save_verification(results, concepts_path)
+
+    # Résumé : nombre de concepts pour chaque façon d'être trouvé
+    counts = {}
+    total = 0
+    for source, concepts in results.items():
+        for concept in concepts:
+            found_by = concept["found_by"]
+            if found_by not in counts:
+                counts[found_by] = 0
+            counts[found_by] = counts[found_by] + 1
+            total = total + 1
+
+    print(f"\nRésumé ({total} concepts) :")
+    for found_by, count in counts.items():
+        print(f"  {found_by:12} : {count}")
+    print("Les concepts trouvés par Qwen (llm_...) sont à faire confirmer par les experts.")
+
+
+if __name__ == "__main__":
+    main()

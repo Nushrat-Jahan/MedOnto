@@ -53,6 +53,7 @@ MedOnto/
     │   └── items.json
     │
     └── verification/            ← SHARED VERIFICATION · common JSON → SNOMED CT
+        ├── pipeline.py          ← entry point
         ├── snomed_api.py        ← questions to the BioPortal API (exact search, broad search, children)
         ├── llm_choice.py        ← questions to Qwen (choose a candidate, propose another name)
         ├── snomed_check.py      ← verification steps
@@ -97,6 +98,10 @@ From the project root, with Python 3.11 and Ollama running (model `qwen2.5:7b`):
 python -m src.bdd.pipeline "data/<dataset>.csv"
 python -m src.bdd.pipeline "data/<dataset>.xlsx" --label-row   (if row 2 contains the labels)
 → outputs/<dataset>_<id>/concepts_<id>.json
+
+# Shared verification: common JSON → SNOMED CT concepts
+python -m src.verification.pipeline "outputs/<dataset>_<id>/concepts_<id>.json"
+→ outputs/<dataset>_<id>/concepts_<id>_verification.json
 
 # Raw answer of the BioPortal API for a term
 python src/verification/voir_api.py "white blood cell count"
