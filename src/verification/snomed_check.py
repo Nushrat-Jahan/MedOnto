@@ -81,7 +81,7 @@ def verify_exact(data: dict, api_key: str) -> dict:
 
 
 def save_verification(results: dict, concepts_path: str) -> Path:
-    """Enregistre le résultat de verify_exact dans un fichier JSON, à côté du fichier des concepts.
+    """Enregistre le résultat de la vérification dans un fichier JSON, à côté du fichier des concepts.
 
     Le nom du fichier est celui des concepts, suivi de "_verification", ex. :
     outputs/base_a5f742cb/concepts_cc0694c8.json
@@ -89,7 +89,7 @@ def save_verification(results: dict, concepts_path: str) -> Path:
     Le fichier des concepts n'est donc jamais écrasé.
 
     Paramètres :
-        results       : le résultat de verify_exact.
+        results       : le résultat de la vérification (verify_exact, puis verify_llm).
         concepts_path : le chemin du fichier JSON des concepts qui a été vérifié.
 
     Renvoie :
@@ -203,3 +203,46 @@ def check_with_llm(concept: dict, api_key: str) -> dict:
             result["llm_reason"] = child_choice["reason"]
 
     return result
+
+
+def verify_llm(results: dict, api_key: str) -> dict:
+    """Étape 3 de la vérification sur tout le JSON : check_with_llm pour chaque concept non trouvé.
+
+    Les concepts déjà trouvés par la recherche exacte (étapes 1 et 2) ne sont pas touchés.
+
+    Paramètres :
+        results : le résultat de verify_exact (format commun, avec le champ "found_by").
+        api_key : la clé de l'API BioPortal (renvoyée par get_api_key).
+
+    Renvoie :
+        le même format {"<source>": [concept, ...]}, où chaque concept a 2 champs en plus :
+            "llm_match"  : "exact" ou "broader" si Qwen a trouvé le concept, sinon None ;
+            "llm_reason" : la justification de Qwen, sinon None.
+        Pour les concepts non trouvés à l'étape 1-2, found_by, matched_term, snomed_id et
+        snomed_label sont remplacés par le résultat de check_with_llm.
+    """
+    new_results = {}
+
+    for source, concepts in results.items():
+        new_results[source] = []
+
+        for concept in concepts:
+            # Copie du concept ; les 2 nouveaux champs valent None par défaut
+            result = concept.copy()
+            result["llm_match"] = None
+            result["llm_reason"] = None
+
+            # Seuls les concepts non trouvés par la recherche exacte passent à l'étape 3
+            if concept["found_by"] == "not_found":
+                llm_result = check_with_llm(concept, api_key)
+                result["found_by"] = llm_result["found_by"]
+                result["matched_term"] = llm_result["matched_term"]
+                result["snomed_id"] = llm_result["snomed_id"]
+                result["snomed_label"] = llm_result["snomed_label"]
+                result["llm_match"] = llm_result["llm_match"]
+                result["llm_reason"] = llm_result["llm_reason"]
+                print(f"  {concept['item_id']} ({concept['concept_proposed']}) : {result['found_by']}")
+
+            new_results[source].append(result)
+
+    return new_results
