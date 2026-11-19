@@ -21,6 +21,7 @@ import json
 import os
 import sys
 from multiprocessing import Pool, cpu_count
+from pathlib import Path
 import time
 import urllib.error
 import urllib.parse
@@ -194,6 +195,31 @@ def verify_exact(data: dict, api_key: str) -> dict:
             results[source].append(result)
 
     return results
+
+
+def save_verification(results: dict, concepts_path: str) -> Path:
+    """Enregistre le résultat de verify_exact dans un fichier JSON, à côté du fichier des concepts.
+
+    Le nom du fichier est celui des concepts, suivi de "_verification", ex. :
+    outputs/base_a5f742cb/concepts_cc0694c8.json
+    -> outputs/base_a5f742cb/concepts_cc0694c8_verification.json
+    Le fichier des concepts n'est donc jamais écrasé.
+
+    Paramètres :
+        results       : le résultat de verify_exact.
+        concepts_path : le chemin du fichier JSON des concepts qui a été vérifié.
+
+    Renvoie :
+        le chemin du fichier écrit.
+    """
+    concepts_path = Path(concepts_path)
+    out_path = concepts_path.parent / (concepts_path.stem + "_verification.json")
+
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=2, ensure_ascii=False)
+
+    print(f"-> Vérification enregistrée : {out_path}")
+    return out_path
 
 
 def check_concept_in_snomed(query: str, config: dict) -> int:
