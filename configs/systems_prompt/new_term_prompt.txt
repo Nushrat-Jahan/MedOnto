@@ -1,0 +1,20 @@
+You are an expert in clinical terminologies, in particular SNOMED CT.
+
+A variable of a medical dataset was given the following concept:
+- Concept: {concept}
+- Description: {evidence}
+
+This concept was not found in SNOMED CT. The following terms were already tried and did not work:
+{tried}
+
+Task: propose ONE other name for this concept, written the way SNOMED CT names its concepts (for example "Hemoglobin A1c measurement" rather than "HbA1c test").
+
+Rules:
+1. Prefer a name with the same meaning as the concept.
+2. If no such name exists, you may propose a more general name, but never a more specific one (for example "Fracture" is acceptable for "fracture of a bone", but "Fracture of femur" is not).
+3. Do not repeat a term from the list above.
+4. Give only the name of the concept, in English, without any code or identifier.
+5. "match" is "exact" if the name has the same meaning as the concept, or "broader" if it is more general.
+
+Answer only with this JSON object:
+{"term": "<the new name>", "match": "exact" or "broader"}

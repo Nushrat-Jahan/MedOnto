@@ -23,6 +23,13 @@ for placeholder in ["{concept}", "{evidence}", "{candidates}"]:
     if placeholder not in CHOICE_PROMPT:
         sys.exit(f"{CHOICE_PROMPT_PATH} doit contenir le repère {placeholder}")
 
+# Prompt du nouveau terme : {concept}, {evidence} et {tried} sont remplacés pour chaque concept.
+NEW_TERM_PROMPT_PATH = Path("configs/systems_prompt/new_term_prompt.txt")
+NEW_TERM_PROMPT = NEW_TERM_PROMPT_PATH.read_text(encoding="utf-8")
+for placeholder in ["{concept}", "{evidence}", "{tried}"]:
+    if placeholder not in NEW_TERM_PROMPT:
+        sys.exit(f"{NEW_TERM_PROMPT_PATH} doit contenir le repère {placeholder}")
+
 
 def ask_qwen_choice(concept: dict, candidates: list[dict]) -> dict:
     """Demande à Qwen de choisir, parmi les candidats de l'API, le concept SNOMED CT le plus proche.
@@ -100,4 +107,68 @@ def ask_qwen_choice(concept: dict, candidates: list[dict]) -> dict:
         result["label"] = chosen["label"]
         result["match"] = answer.get("match")
 
+    return result
+
+
+def ask_qwen_new_term(concept: dict, tried_terms: list[str]) -> dict:
+    """Demande à Qwen un autre nom pour un concept qui n'a pas été trouvé dans SNOMED CT.
+
+    Sert quand Qwen n'a choisi aucun des candidats de l'API (ask_qwen_choice). On lui donne
+    les termes déjà essayés, et il propose un seul nouveau nom, écrit comme dans SNOMED CT.
+    Ce nom n'est PAS vérifié ici : il faut ensuite le chercher avec search_exact.
+
+    Paramètres :
+        concept     : un concept du JSON commun (on utilise "concept_proposed" et "evidence").
+        tried_terms : les termes déjà essayés (le concept, ses synonymes, les candidats rejetés).
+
+    Renvoie :
+        {"term": "laboratory test date", "match": "exact", "raw_answer": "<réponse brute>"}
+        term et match valent None si la réponse est illisible ou répète un terme déjà essayé.
+    """
+    result = {
+        "term": None,
+        "match": None,
+        "raw_answer": None,
+    }
+
+    # 1. Liste des termes déjà essayés, un par ligne
+    lines = []
+    for tried in tried_terms:
+        lines.append("- " + tried)
+
+    prompt = NEW_TERM_PROMPT.replace("{concept}", concept["concept_proposed"])
+    prompt = prompt.replace("{evidence}", str(concept.get("evidence", "")))
+    prompt = prompt.replace("{tried}", "\n".join(lines))
+
+    # 2. Question à Qwen : réponse en JSON, temperature=0
+    response = ollama.chat(
+        model=MODEL,
+        messages=[{"role": "user", "content": prompt}],
+        options={"temperature": 0},
+        format="json",
+    )
+    raw = response["message"]["content"]
+    result["raw_answer"] = raw
+
+    # 3. Lecture de la réponse : une réponse illisible ne donne aucun terme
+    try:
+        answer = json.loads(raw)
+    except json.JSONDecodeError:
+        return result
+    if not isinstance(answer, dict):
+        return result
+
+    # On n'accepte qu'un texte non vide
+    term = answer.get("term")
+    if not isinstance(term, str) or term.strip() == "":
+        return result
+    term = term.strip()
+
+    # On refuse un terme déjà essayé (les majuscules ne comptent pas)
+    for tried in tried_terms:
+        if term.lower() == tried.lower():
+            return result
+
+    result["term"] = term
+    result["match"] = answer.get("match")
     return result
