@@ -2,7 +2,8 @@
 
 Ce fichier ne contient que les fonctions qui interrogent l'API : chacune envoie une requête
 et renvoie les concepts SNOMED CT trouvés (identifiant et nom officiel).
-Les étapes de la vérification, qui utilisent ces fonctions, sont dans src/snomed_check.py.
+Les étapes de la vérification, qui utilisent ces fonctions, sont dans
+src/verification/snomed_check.py.
 
 La clé de l'API est lue dans le fichier .env à la racine du projet (BIOPORTAL_API_KEY=...).
 """

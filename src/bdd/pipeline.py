@@ -5,8 +5,8 @@ Enchaîne les étapes de l'extraction dans l'ordre, en appelant les fonctions de
 postprocess commun et écrits au format JSON commun.
 
 Comme pour la partie texte, le pipeline s'arrête là : la recherche dans SNOMED CT fait partie de
-la vérification, commune à toutes les parties (src/verification.py), qui se lance à part sur le
-fichier produit.
+la vérification, commune à toutes les parties (dossier src/verification/), qui se lance à part
+sur le fichier produit.
 
 Lancement, depuis la racine du projet (même principe que la partie texte, src/text/pipeline.py) :
     python -m src.bdd.pipeline "data/<ma_base>.csv"

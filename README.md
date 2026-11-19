@@ -18,70 +18,92 @@ Common workflow:
 
 **Source data → LLM-assisted semantic interpretation → post-processing → verification → ontology alignment → semantic representation**
 
-## The `architecture-commun` branch
+## Repository structure
 
-This branch is the **shared foundation** of the project. Each student merges it into their own branch
-and reorganizes their code on the same structure, so that the three tracks can be merged together
-without conflicts.
+The project is organized in **two parts**: an **extraction** specific to each type of data, which
+always produces the same JSON (the common format), then a **verification** shared by all tracks.
+
+```text
+extraction (one per track) → common JSON → shared verification (SNOMED CT)
+```
 
 ```text
 MedOnto/
-├── README.md              ← project documentation (this file)
+├── README.md                    ← project documentation (this file)
 ├── LICENSE
+├── configs/
+│   ├── models/                  ← model settings (text track)
+│   ├── systems_prompt/          ← extraction prompts: shared system prompt, one user template per track
+│   └── verification_prompts/    ← prompts given to Qwen during the verification
 └── src/
     ├── __init__.py
-    ├── postprocess.py     ← shared entry point to standardize model outputs
-    ├── verification.py    ← shared logic to accept or reject model outputs
-    ├── utils.py           ← shared helper functions (file I/O, parsing)
-    ├── text/              ← track: medical and mental-health text
-    │   ├── __init__.py
-    │   ├── pipeline.py
+    ├── postprocess.py           ← shared cleaning of the model outputs (all tracks)
+    ├── utils.py                 ← shared helper functions (file I/O, parsing)
+    │
+    ├── bdd/                     ← EXTRACTION · structured cohort data
+    │   ├── pipeline.py          ← entry point
+    │   ├── extract_variables.py ← step 1: variables of the dataset
+    │   └── extract_concepts.py  ← step 2: concepts proposed by Qwen, in the common JSON format
+    ├── text/                    ← EXTRACTION · medical and mental-health text
+    │   ├── pipeline.py          ← entry point
     │   ├── preprocess.py
     │   └── spanextraction.py
-    ├── bdd/               ← track: structured cohort data
-    │   ├── __init__.py
-    │   ├── pipeline.py    ← entry point: python -m src.bdd.pipeline "data/<dataset>"
-    │   ├── extract_variables.py
-    │   └── extract_concepts.py
-    └── questions/         ← track: questionnaire and assessment data
-        ├── __init__.py
-        ├── extraction_qwen_automatisee.py
-        ├── recherche_snomed_B2.py
-        ├── decision_match_C2.py
-        ├── generation_ttl_D2.py
-        └── valider_ttl_D2.py
+    ├── questions/               ← EXTRACTION · questionnaire and assessment data
+    │   ├── extraction_questions.py
+    │   └── items.json
+    │
+    └── verification/            ← SHARED VERIFICATION · common JSON → SNOMED CT
+        ├── snomed_api.py        ← questions to the BioPortal API (exact search, broad search, children)
+        ├── llm_choice.py        ← questions to Qwen (choose a candidate, propose another name)
+        ├── snomed_check.py      ← verification steps
+        └── voir_api.py          ← small tool showing the raw answer of the API for a term
 ```
 
-### Shared modules (`src/`)
-
-- **`postprocess.py`** is the **entry point to standardize our data**. Every track passes the raw
-  outputs of the model through it, so that all results share the same format before verification:
-  text normalization (lowercase, whitespace) and removal of meaningless items (punctuation,
-  stopwords, anonymized tokens, digits only, blacklisted terms, lab-value patterns).
-- **`verification.py`** will contain the **common logic to validate or reject the outputs of Qwen**:
-  structure checks, mandatory fields, verification against SNOMED CT and assignment of a validation
-  status (Correct / Incorrect / Uncertain). It currently contains documentation only.
-- **`utils.py`** gathers the **shared helper functions** used by every track: reading text, PDF,
-  TOML and JSON files, writing JSON files, parsing concept and triplet lists from raw model output,
-  and the common `Triplet` structure (subject, relation, object).
-
-### Track packages
-
-Each track has its own package inside `src/`:
-
-| Package | Track |
-|---|---|
-| [`src/text/`](src/text/README.md) | Medical and mental-health text |
-| `src/bdd/` | Structured cohort data |
-| `src/questions/` | Questionnaire and assessment data |
+Not versioned: `data/` (datasets), `outputs/` (results, confidential) and `.env` (API key).
 
 Every folder of `src/` is a Python package (`__init__.py`). Code is run and imported from the
-project root, for example `from src.utils import load_json_file` or
-`from src.text.preprocess import preprocess`.
+project root, for example `from src.utils import load_json_file`.
 
-The [`src/text/` README](src/text/README.md) documents the text-extraction pipeline in detail:
-how to configure the models and prompts, and how to run `src.text.pipeline` from the command
-line or as a Python function.
+### Shared modules
+
+- **`postprocess.py`** standardizes the raw outputs of the model, so that all tracks share the same
+  format before verification: text normalization (lowercase, whitespace), removal of meaningless
+  items, and removal of near-duplicate concepts.
+- **`utils.py`** gathers the shared helper functions: reading text, PDF, TOML and JSON files,
+  writing JSON files, parsing concept and triplet lists from raw model output.
+
+### The shared verification (`src/verification/`)
+
+For each concept of the common JSON, the verification stops as soon as one step finds it:
+
+1. the concept itself is searched in SNOMED CT (exact search);
+2. otherwise, its synonyms (exact search);
+3. otherwise, the API proposes candidates (broad search) and Qwen chooses the closest one, or
+   proposes another name; the direct children of the chosen concept are then examined;
+4. otherwise, embedding similarity;
+5. otherwise, the concept becomes a candidate proposed to the experts.
+
+Qwen only chooses among real SNOMED CT concepts returned by the API: it cannot invent an identifier.
+Concepts found with Qwen are marked "to confirm" for the experts.
+
+The [`src/text/` README](src/text/README.md) documents the text-extraction pipeline in detail.
+
+## How to run
+
+From the project root, with Python 3.11 and Ollama running (model `qwen2.5:7b`):
+
+```text
+# Extraction, structured data track: dataset → common JSON
+python -m src.bdd.pipeline "data/<dataset>.csv"
+python -m src.bdd.pipeline "data/<dataset>.xlsx" --label-row   (if row 2 contains the labels)
+→ outputs/<dataset>_<id>/concepts_<id>.json
+
+# Raw answer of the BioPortal API for a term
+python src/verification/voir_api.py "white blood cell count"
+```
+
+The verification needs a BioPortal API key in a `.env` file at the project root:
+`BIOPORTAL_API_KEY=<your key>`.
 
 ## Common technical setup
 

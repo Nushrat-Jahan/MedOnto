@@ -17,14 +17,14 @@ MODEL = "qwen2.5:7b"  # le même modèle que pour l'extraction
 
 # Prompt du choix : {concept}, {evidence} et {candidates} sont remplacés pour chaque concept.
 # Chemin relatif : les scripts se lancent depuis la racine du projet.
-CHOICE_PROMPT_PATH = Path("configs/systems_prompt/choice_prompt.txt")
+CHOICE_PROMPT_PATH = Path("configs/verification_prompts/choice_prompt.txt")
 CHOICE_PROMPT = CHOICE_PROMPT_PATH.read_text(encoding="utf-8")
 for placeholder in ["{concept}", "{evidence}", "{candidates}"]:
     if placeholder not in CHOICE_PROMPT:
         sys.exit(f"{CHOICE_PROMPT_PATH} doit contenir le repère {placeholder}")
 
 # Prompt du nouveau terme : {concept}, {evidence} et {tried} sont remplacés pour chaque concept.
-NEW_TERM_PROMPT_PATH = Path("configs/systems_prompt/new_term_prompt.txt")
+NEW_TERM_PROMPT_PATH = Path("configs/verification_prompts/new_term_prompt.txt")
 NEW_TERM_PROMPT = NEW_TERM_PROMPT_PATH.read_text(encoding="utf-8")
 for placeholder in ["{concept}", "{evidence}", "{tried}"]:
     if placeholder not in NEW_TERM_PROMPT:

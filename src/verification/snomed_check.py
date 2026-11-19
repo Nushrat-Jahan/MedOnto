@@ -7,13 +7,14 @@ Feuille de route décidée en réunion : pour chaque concept, on s'arrête dès 
   4. sinon, embedding
   5. sinon, le concept devient un candidat proposé aux experts
 
-Les questions à l'API sont dans src/snomed_api.py.
+Les questions à l'API sont dans src/verification/snomed_api.py, celles posées à Qwen dans
+src/verification/llm_choice.py.
 """
 
 import json
 from pathlib import Path
 
-from src.snomed_api import search_exact
+from src.verification.snomed_api import search_exact
 
 
 def verify_exact(data: dict, api_key: str) -> dict:
