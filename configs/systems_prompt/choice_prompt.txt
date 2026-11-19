@@ -1,0 +1,21 @@
+You are an expert in clinical terminologies, in particular SNOMED CT.
+
+A variable of a medical dataset was given the following concept:
+- Concept: {concept}
+- Description: {evidence}
+
+A search engine returned the numbered SNOMED CT concepts below. Some of them only share words with the concept and have a different meaning.
+
+{candidates}
+
+Task: choose the SNOMED CT concept from the list that best represents the concept above.
+
+Rules:
+1. Choose only a number from the list. Never invent a concept.
+2. Compare the meaning, not only the words. A substance is not a measurement, and a measurement is not a finding.
+3. "match" is "exact" if the chosen concept has the same meaning as the concept, or "broader" if it is more general but still correct (for example "Heart disease" for "acute myocardial infarction").
+4. Prefer an "exact" concept. Choose a "broader" concept only if no concept of the list has the same meaning.
+5. If no concept of the list is correct, even as a more general concept, answer 0.
+
+Answer only with this JSON object:
+{"choice": <number of the chosen concept, or 0>, "match": "exact" or "broader", "reason": "<one short sentence>"}
