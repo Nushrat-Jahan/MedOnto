@@ -21,6 +21,11 @@ API_URL = "https://data.bioontology.org/search"  # adresse de la recherche
 ONTOLOGY = "SNOMEDCT"                            # on ne cherche que dans SNOMED CT
 TIMEOUT = 30                                     # secondes d'attente maximum
 
+# Adresse des concepts de SNOMED CT dans l'API (pour demander les enfants d'un concept)
+CLASSES_URL = "https://data.bioontology.org/ontologies/" + ONTOLOGY + "/classes/"
+# Début de l'adresse (@id) de chaque concept SNOMED CT : on y ajoute l'identifiant
+SNOMED_IRI = "http://purl.bioontology.org/ontology/SNOMEDCT/"
+
 
 def get_api_key() -> str:
     """Lit la clé de l'API BioPortal dans le fichier .env.
@@ -128,3 +133,52 @@ def search_broad(term: str, api_key: str, max_results: int = 10) -> list[dict]:
             })
 
     return candidates
+
+
+def get_direct_children(snomed_id: str, api_key: str, max_results: int = 50) -> list[dict]:
+    """Demande à l'API BioPortal les enfants directs d'un concept SNOMED CT.
+
+    Les enfants directs sont les concepts situés juste en dessous dans l'arbre de SNOMED CT
+    (pas les petits-enfants). Ils sont plus précis que leur parent, ex. pour 55235003
+    "C-reactive protein measurement" : "Plasma C-reactive protein measurement",
+    "Serum C reactive protein level"...
+
+    Paramètres :
+        snomed_id   : l'identifiant SNOMED CT du concept parent, ex. "55235003".
+        api_key     : la clé de l'API BioPortal (renvoyée par get_api_key).
+        max_results : le nombre maximum d'enfants renvoyés (50 par défaut), pour que la liste
+                      donnée ensuite à Qwen reste courte.
+
+    Renvoie :
+        une liste d'enfants, sous la même forme que search_broad :
+        [{"snomed_id": "270980008", "label": "Plasma C-reactive protein measurement",
+          "synonyms": [...]}, ...]
+        La liste est vide si le concept n'a pas d'enfants.
+    """
+    # Adresse des enfants : l'adresse du concept (encodée pour tenir dans une adresse web),
+    # suivie de "/children", ex. ".../classes/http%3A%2F%2F...%2FSNOMEDCT%2F55235003/children"
+    concept_iri = SNOMED_IRI + snomed_id
+    params = {
+        "include": "prefLabel,synonym",
+        "pagesize": max_results,
+    }
+    url = CLASSES_URL + urllib.parse.quote(concept_iri, safe="") + "/children"
+    url = url + "?" + urllib.parse.urlencode(params)
+
+    # Envoi de la requête : la clé passe dans l'en-tête (elle n'apparaît pas dans l'adresse)
+    request = urllib.request.Request(url, headers={"Authorization": "apikey token=" + api_key})
+    with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
+        data = json.load(response)
+
+    # On garde les enfants qui sont de vrais concepts SNOMED CT
+    children = []
+    for concept in data.get("collection", []):
+        child_id = concept["@id"].split("/")[-1]
+        if child_id.isdigit():
+            children.append({
+                "snomed_id": child_id,
+                "label": concept.get("prefLabel"),
+                "synonyms": concept.get("synonym", []),
+            })
+
+    return children
