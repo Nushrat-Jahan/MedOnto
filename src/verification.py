@@ -1,14 +1,12 @@
-"""Vérification commune : les concepts proposés par le LLM sont-ils dans SNOMED CT ?
+"""Première version de la vérification : les concepts proposés par le LLM sont-ils dans SNOMED CT ?
 
-Ce fichier est commun à toutes les parties du projet. Il lit un ou plusieurs fichiers au format
-JSON commun ({"<source>": [concept, ...]}) et vérifie chaque "concept_proposed" dans SNOMED CT,
-avec l'API BioPortal.
+Il lit un ou plusieurs fichiers au format JSON commun ({"<source>": [concept, ...]}) et vérifie
+chaque "concept_proposed" dans SNOMED CT, avec l'API BioPortal : recherche large, résultat 0 ou 1
+par concept, puis filtre sémantique (embedding) sur les concepts non trouvés.
 
-Il contient deux familles de fonctions :
-- les fonctions de la première version (check_concept_in_snomed, filtre sémantique, main) :
-  recherche large, résultat 0 ou 1 par concept ;
-- les fonctions de la nouvelle vérification, ajoutées étape par étape (search_exact...) :
-  recherche exacte, qui garde l'identifiant SNOMED CT trouvé.
+Ce fichier est gardé tel quel car src/questions/verification_questions.py l'utilise.
+La nouvelle vérification (recherche exacte, qui garde l'identifiant SNOMED CT trouvé) est dans
+src/snomed_api.py (questions à l'API) et src/snomed_check.py (étapes de la vérification).
 
 La clé de l'API est lue dans le fichier .env à la racine du projet (BIOPORTAL_API_KEY=...).
 
@@ -21,7 +19,6 @@ import json
 import os
 import sys
 from multiprocessing import Pool, cpu_count
-from pathlib import Path
 import time
 import urllib.error
 import urllib.parse
@@ -31,6 +28,7 @@ import pandas as pd
 import numpy as np
 from dotenv import load_dotenv
 from src.postprocess import _get_model
+from src.snomed_api import get_api_key  # déplacée dans snomed_api.py, gardée ici pour main
 import torch
 import torch.nn.functional as F
 
@@ -74,152 +72,6 @@ SNOMED_TOP_LEVEL_CATEGORY: list[dict[str, str]] = [
 # Mémoire des enfants déjà demandés : {identifiant SNOMED CT: liste de ses enfants}.
 # Évite de redemander les mêmes enfants au serveur.
 _CHILDREN_CACHE: dict[str, list[dict[str, str]]] = {}
-
-
-def get_api_key() -> str:
-    """Lit la clé de l'API BioPortal dans le fichier .env.
-
-    Arrête le programme avec un message clair si la clé est absente.
-
-    Renvoie :
-        la clé, sous forme de texte.
-    """
-    key = os.environ.get("BIOPORTAL_API_KEY", "").strip()
-    if not key:
-        raise SystemExit(
-            "BIOPORTAL_API_KEY manquante dans le fichier .env.\n"
-            "Veuillez ajouter la ligne suivante dans votre .env :\n"
-            "BIOPORTAL_API_KEY=votre_cle_ici"
-        )
-    return key
-
-
-def search_exact(term: str, api_key: str) -> dict | None:
-    """Cherche un terme dans SNOMED CT en recherche exacte (API BioPortal).
-
-    La recherche exacte ne renvoie un concept que si son nom, ou un de ses synonymes, est
-    exactement le terme cherché (les majuscules ne comptent pas). Contrairement à la recherche
-    large, elle ne renvoie jamais un concept qui ressemble seulement au terme : un concept
-    trouvé ici peut être accepté tel quel.
-
-    On garde l'identifiant SNOMED CT du concept trouvé et son nom officiel : on peut ainsi
-    vérifier le résultat, et plus tard relier la variable à SNOMED CT dans l'ontologie.
-
-    Paramètres :
-        term    : le terme à chercher, ex. "white blood cell count".
-        api_key : la clé de l'API BioPortal (renvoyée par get_api_key).
-
-    Renvoie :
-        {"snomed_id": "767002", "label": "White blood cell count"} si un concept est trouvé ;
-        None sinon.
-    """
-    # Adresse de la recherche : le terme, l'ontologie SNOMED CT, et la recherche exacte
-    params = {
-        "q": term,
-        "ontologies": DEFAULT_CONFIG["ontology"],
-        "require_exact_match": "true",
-        "include": "prefLabel",
-    }
-    url = DEFAULT_CONFIG["api_url"] + "?" + urllib.parse.urlencode(params)
-
-    # Envoi de la requête : la clé passe dans l'en-tête (elle n'apparaît pas dans l'adresse)
-    request = urllib.request.Request(url, headers={"Authorization": "apikey token=" + api_key})
-    with urllib.request.urlopen(request, timeout=DEFAULT_CONFIG["timeout"]) as response:
-        data = json.load(response)
-
-    # Premier résultat qui est un vrai concept SNOMED CT : son adresse finit par son identifiant,
-    # ex. "http://purl.bioontology.org/ontology/SNOMEDCT/767002" -> "767002"
-    for concept in data.get("collection", []):
-        snomed_id = concept["@id"].split("/")[-1]
-        if snomed_id.isdigit():
-            return {"snomed_id": snomed_id, "label": concept.get("prefLabel")}
-
-    return None
-
-
-def verify_exact(data: dict, api_key: str) -> dict:
-    """Étapes 1 et 2 de la vérification : recherche exacte du concept, puis de ses synonymes.
-
-    Pour chaque concept du JSON commun :
-    1. on cherche "concept_proposed" avec search_exact ;
-    2. s'il n'est pas trouvé, on cherche ses synonymes un par un, et on s'arrête au premier
-       synonyme trouvé.
-
-    Chaque concept garde tous ses champs, et on lui ajoute le résultat de la vérification.
-
-    Paramètres :
-        data    : le contenu du JSON commun, {"<source>": [concept, ...]}.
-        api_key : la clé de l'API BioPortal (renvoyée par get_api_key).
-
-    Renvoie :
-        le même format {"<source>": [concept, ...]}, où chaque concept a 4 champs en plus :
-            "found_by"     : "concept", "synonym" ou "not_found" ;
-            "matched_term" : le terme qui a été trouvé (le concept ou le synonyme), sinon None ;
-            "snomed_id"    : l'identifiant SNOMED CT trouvé, ex. "767002", sinon None ;
-            "snomed_label" : le nom officiel dans SNOMED CT, sinon None.
-    """
-    results = {}
-
-    for source, concepts in data.items():
-        results[source] = []
-
-        for concept in concepts:
-            # Copie du concept, avec le résultat "pas trouvé" par défaut
-            result = concept.copy()
-            result["found_by"] = "not_found"
-            result["matched_term"] = None
-            result["snomed_id"] = None
-            result["snomed_label"] = None
-
-            # 1. Le concept lui-même
-            term = concept["concept_proposed"]
-            found = search_exact(term, api_key)
-            if found is not None:
-                result["found_by"] = "concept"
-                result["matched_term"] = term
-                result["snomed_id"] = found["snomed_id"]
-                result["snomed_label"] = found["label"]
-
-            # 2. Sinon, ses synonymes un par un : on s'arrête au premier trouvé
-            if found is None:
-                for synonym in concept.get("synonyms", []):
-                    found = search_exact(synonym, api_key)
-                    if found is not None:
-                        result["found_by"] = "synonym"
-                        result["matched_term"] = synonym
-                        result["snomed_id"] = found["snomed_id"]
-                        result["snomed_label"] = found["label"]
-                        break
-
-            print(f"  {concept['item_id']} ({term}) : {result['found_by']}")
-            results[source].append(result)
-
-    return results
-
-
-def save_verification(results: dict, concepts_path: str) -> Path:
-    """Enregistre le résultat de verify_exact dans un fichier JSON, à côté du fichier des concepts.
-
-    Le nom du fichier est celui des concepts, suivi de "_verification", ex. :
-    outputs/base_a5f742cb/concepts_cc0694c8.json
-    -> outputs/base_a5f742cb/concepts_cc0694c8_verification.json
-    Le fichier des concepts n'est donc jamais écrasé.
-
-    Paramètres :
-        results       : le résultat de verify_exact.
-        concepts_path : le chemin du fichier JSON des concepts qui a été vérifié.
-
-    Renvoie :
-        le chemin du fichier écrit.
-    """
-    concepts_path = Path(concepts_path)
-    out_path = concepts_path.parent / (concepts_path.stem + "_verification.json")
-
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2, ensure_ascii=False)
-
-    print(f"-> Vérification enregistrée : {out_path}")
-    return out_path
 
 
 def check_concept_in_snomed(query: str, config: dict) -> int:
