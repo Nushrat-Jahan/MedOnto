@@ -4,7 +4,9 @@ Enchaîne les étapes de la vérification dans l'ordre, en appelant les fonction
 src/verification/snomed_check.py :
   étapes 1-2 : recherche exacte du concept, puis de ses synonymes (verify_exact) ;
   étape 3    : l'API propose des concepts, Qwen choisit (verify_llm).
-Le résultat est écrit à côté du fichier des concepts : concepts_<id>_verification.json.
+Deux fichiers sont écrits à côté du fichier des concepts :
+  concepts_<id>_verification.json : le résultat complet, pour tous les concepts ;
+  concepts_<id>_experts.xlsx      : les concepts à examiner par les experts (onglets CONCEPTS et README).
 
 Lancement, depuis la racine du projet, avec Ollama ouvert :
     python -m src.verification.pipeline "outputs/<nom_base>_<id>/concepts_<id>.json"
@@ -15,7 +17,7 @@ import json
 from pathlib import Path
 
 from src.verification.snomed_api import get_api_key
-from src.verification.snomed_check import save_verification, verify_exact, verify_llm
+from src.verification.snomed_check import save_candidates, save_verification, verify_exact, verify_llm
 
 
 def main() -> None:
@@ -45,6 +47,7 @@ def main() -> None:
     results = verify_llm(results, api_key)
 
     save_verification(results, concepts_path)
+    save_candidates(results, concepts_path)  # fichier Excel pour les experts
 
     # Résumé : nombre de concepts pour chaque façon d'être trouvé
     counts = {}

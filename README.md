@@ -101,7 +101,8 @@ python -m src.bdd.pipeline "data/<dataset>.xlsx" --label-row   (if row 2 contain
 
 # Shared verification: common JSON → SNOMED CT concepts
 python -m src.verification.pipeline "outputs/<dataset>_<id>/concepts_<id>.json"
-→ outputs/<dataset>_<id>/concepts_<id>_verification.json
+→ outputs/<dataset>_<id>/concepts_<id>_verification.json   (full result, all concepts)
+→ outputs/<dataset>_<id>/concepts_<id>_experts.xlsx        (concepts to review: CONCEPTS and README sheets)
 
 # Raw answer of the BioPortal API for a term
 python src/verification/voir_api.py "white blood cell count"
