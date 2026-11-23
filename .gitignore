@@ -4,6 +4,9 @@ data/
 # Résultats du pipeline : dérivés des données, confidentiels (jamais versionnés)
 outputs/
 
+# Anciens résultats des parties texte et questionnaires : jamais versionnés non plus
+res/
+
 # Présentations personnelles (conservées en local uniquement)
 docs/Presentation_Olti*
 docs/*.pptx
