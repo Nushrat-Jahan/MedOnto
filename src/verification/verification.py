@@ -9,7 +9,7 @@ Deux fichiers sont écrits à côté du fichier des concepts :
   concepts_<id>_experts.xlsx      : les concepts à examiner par les experts (onglets CONCEPTS et README).
 
 Lancement, depuis la racine du projet, avec Ollama ouvert :
-    python -m src.verification.pipeline "outputs/<nom_base>_<id>/concepts_<id>.json"
+    python -m src.verification.verification "outputs/<nom_base>_<id>/concepts_<id>.json"
 """
 
 import argparse

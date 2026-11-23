@@ -12,17 +12,17 @@ items) in the common architecture described in the [root README](../../README.md
 ```text
 src/text/
 ├── __init__.py        ← loads .env, silences noisy warnings (FutureWarning, hf_hub, tokenizer)
-├── pipeline.py        ← entry point: main() + argparse CLI (orchestrates the 5 stages)
+├── extraction_text.py ← entry point: main() + argparse CLI (orchestrates the 5 stages)
 ├── preprocess.py      ← text cleaning, GLiNER semantic filter, prompt building, DataLoaders
 └── spanextraction.py  ← batched LLM generation of the concept JSON
 ```
 
 All modules are imported from the **project root**, e.g.
-`from src.text.pipeline import main`.
+`from src.text.extraction_text import main`.
 
 ## Pipeline overview
 
-`src/text/pipeline.py` orchestrates five stages:
+`src/text/extraction_text.py` orchestrates five stages:
 
 ```text
 documents (PDF/TXT/HF stream)
@@ -101,30 +101,30 @@ Run it **from the project root** with the module form, so that the absolute impo
 (`from src.postprocess import ...`) resolve:
 
 ```bash
-python -m src.text.pipeline data/depression.pdf
+python -m src.text.extraction_text data/depression.pdf
 ```
 
 Several documents at once, with a custom output file:
 
 ```bash
-python -m src.text.pipeline data/depression.pdf "data/Depression_A_Review_of_its_Definition.pdf" \
+python -m src.text.extraction_text data/depression.pdf "data/Depression_A_Review_of_its_Definition.pdf" \
     --res_path res/run1.json --batch_size 8 --max_new_tokens 512
 ```
 
 Stream a Hugging Face dataset instead of local files:
 
 ```bash
-python -m src.text.pipeline --hf_dataset aisc-team-a1/augmented-clinical-notes \
+python -m src.text.extraction_text --hf_dataset aisc-team-a1/augmented-clinical-notes \
     --column_name full_note --max_documents 100 --res_path res/hf_run.json
 ```
 
 Disable the semantic filter (keep every document, whatever its content):
 
 ```bash
-python -m src.text.pipeline data/depression.pdf --not_filtering
+python -m src.text.extraction_text data/depression.pdf --not_filtering
 ```
 
-> `python src/text/pipeline.py` does **not** work: running the file directly puts `src/text/`
+> `python src/text/extraction_text.py` does **not** work: running the file directly puts `src/text/`
 > on `sys.path` instead of the project root, and the `src.*` imports fail.
 
 ### Python API
@@ -133,7 +133,7 @@ python -m src.text.pipeline data/depression.pdf --not_filtering
 `res_path`; pass `res_path=None` to print them on stdout instead.
 
 ```python
-from src.text.pipeline import main
+from src.text.extraction_text import main
 
 main(
     txt_file_path="data/depression.pdf",   # or a list of paths, or None with a HF dataset

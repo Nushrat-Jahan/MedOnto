@@ -8,11 +8,11 @@ Comme pour la partie texte, le pipeline s'arrête là : la recherche dans SNOMED
 la vérification, commune à toutes les parties (dossier src/verification/), qui se lance à part
 sur le fichier produit.
 
-Lancement, depuis la racine du projet (même principe que la partie texte, src/text/pipeline.py) :
-    python -m src.bdd.pipeline "data/<ma_base>.csv"
-    python -m src.bdd.pipeline "data/<ma_base>.xlsx" --label-row   (si la ligne 2 contient les libellés)
+Lancement, depuis la racine du projet (même principe que la partie texte, src/text/extraction_text.py) :
+    python -m src.bdd.extraction_bdd "data/<ma_base>.csv"
+    python -m src.bdd.extraction_bdd "data/<ma_base>.xlsx" --label-row   (si la ligne 2 contient les libellés)
 
-"python src/bdd/pipeline.py" ne fonctionne pas : les imports "from src.bdd..." ne sont trouvés
+"python src/bdd/extraction_bdd.py" ne fonctionne pas : les imports "from src.bdd..." ne sont trouvés
 que si Python est lancé depuis la racine du projet avec -m.
 
 Les résultats sont écrits dans outputs/<nom_base>_<id>/.

@@ -205,7 +205,7 @@ def extract_concepts(variables: list[dict], readme: list[dict] | None = None) ->
 def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) -> Path:
     """Enregistre les concepts au format JSON commun à tout le projet.
 
-    C'est le même format que la partie texte (src/text/pipeline.py), pour que la vérification
+    C'est le même format que la partie texte (src/text/extraction_text.py), pour que la vérification
     commune puisse lire les résultats de toutes les parties :
         {"<source>": [concept, concept, ...]}
     où chaque concept a les champs :
@@ -220,7 +220,7 @@ def save_concepts(concepts: list[dict], dataset_dir: str | Path, source: str) ->
 
     Paramètres :
         concepts    : la liste des concepts au format commun : ceux nettoyés par le postprocess
-                      commun (dans pipeline.py), ou les réponses valides de Qwen (test seul de
+                      commun (dans extraction_bdd.py), ou les réponses valides de Qwen (test seul de
                       ce fichier, sans postprocess).
         dataset_dir : le dossier de la base, ex. outputs/<nom_base>_<id>/ (celui de variables.json).
         source      : le nom de la base, utilisé comme clé du JSON (ex. "data/ma_base.xlsx").

@@ -41,11 +41,11 @@ MedOnto/
     ├── utils.py                 ← shared helper functions (file I/O, parsing)
     │
     ├── bdd/                     ← EXTRACTION · structured cohort data
-    │   ├── pipeline.py          ← entry point
+    │   ├── extraction_bdd.py    ← entry point
     │   ├── extract_variables.py ← step 1: variables of the dataset
     │   └── extract_concepts.py  ← step 2: concepts proposed by Qwen, in the common JSON format
     ├── text/                    ← EXTRACTION · medical and mental-health text
-    │   ├── pipeline.py          ← entry point
+    │   ├── extraction_text.py   ← entry point
     │   ├── preprocess.py
     │   └── spanextraction.py
     ├── questions/               ← EXTRACTION · questionnaire and assessment data
@@ -53,7 +53,7 @@ MedOnto/
     │   └── items.json
     │
     └── verification/            ← SHARED VERIFICATION · common JSON → SNOMED CT
-        ├── pipeline.py          ← entry point
+        ├── verification.py      ← entry point
         ├── snomed_api.py        ← questions to the BioPortal API (exact search, broad search, children)
         ├── llm_choice.py        ← questions to Qwen (choose a candidate, propose another name)
         ├── snomed_check.py      ← verification steps
@@ -95,12 +95,12 @@ From the project root, with Python 3.11 and Ollama running (model `qwen2.5:7b`):
 
 ```text
 # Extraction, structured data track: dataset → common JSON
-python -m src.bdd.pipeline "data/<dataset>.csv"
-python -m src.bdd.pipeline "data/<dataset>.xlsx" --label-row   (if row 2 contains the labels)
+python -m src.bdd.extraction_bdd "data/<dataset>.csv"
+python -m src.bdd.extraction_bdd "data/<dataset>.xlsx" --label-row   (if row 2 contains the labels)
 → outputs/<dataset>_<id>/concepts_<id>.json
 
 # Shared verification: common JSON → SNOMED CT concepts
-python -m src.verification.pipeline "outputs/<dataset>_<id>/concepts_<id>.json"
+python -m src.verification.verification "outputs/<dataset>_<id>/concepts_<id>.json"
 → outputs/<dataset>_<id>/concepts_<id>_verification.json   (full result, all concepts)
 → outputs/<dataset>_<id>/concepts_<id>_experts.xlsx        (concepts to review: CONCEPTS and README sheets)
 
