@@ -2,7 +2,7 @@
 
 Les données sont rangées par type, un dossier par type :
   data/bdd/            bases de données (CSV, Excel)   → extraction src/bdd/
-  data/questionnaire/  questionnaires                  → pas encore branché
+  data/questionnaire/  questionnaires (.json)          → extraction src/questions/
   data/texte/          textes cliniques                → pas encore branché
 Pour chaque fichier : extraction de son type → JSON commun → vérification commune (SNOMED CT).
 Les résultats sont écrits dans outputs/ (jamais versionné).
@@ -18,11 +18,13 @@ from pathlib import Path
 
 from src.bdd.extract_variables import load_readme
 from src.bdd.extraction_bdd import run_bdd
+from src.questions.extraction_questions import run_questions
 from src.verification.verification import run_verification
 
 DATA_DIR = Path("data")                            # dossier des données (chemin relatif à la racine)
 DATA_TYPES = ["bdd", "questionnaire", "texte"]     # un sous-dossier de data/ par type de données
 BDD_EXTENSIONS = [".csv", ".xlsx", ".xlsm"]        # fichiers lus comme des bases de données
+QUESTIONNAIRE_EXTENSIONS = [".json"]               # fichiers de questions au format items.json
 
 
 def detect_type(file_path: str | Path) -> str | None:
@@ -66,6 +68,11 @@ def process_file(file_path: str | Path, data_type: str) -> dict | None:
         # Un Excel avec un onglet README (comme les fichiers BIO) a ses libellés en ligne 2
         label_row = load_readme(file_path) is not None
         concepts_path = run_bdd(file_path, label_row)
+    elif data_type == "questionnaire":
+        if Path(file_path).suffix.lower() not in QUESTIONNAIRE_EXTENSIONS:
+            print(f"-> Ignoré (format non lu, seulement un fichier de questions .json) : {file_path}")
+            return None
+        concepts_path = run_questions(file_path)
     else:
         print(f"-> Type '{data_type}' pas encore branché, ignoré : {file_path}")
         return None
