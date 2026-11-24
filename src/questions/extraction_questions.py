@@ -1,37 +1,44 @@
-import csv
+"""Partie questionnaires : des questions d'un questionnaire au fichier JSON commun.
+
+Pour chaque question (item) d'un fichier de questions, Qwen propose le concept clinique
+qu'elle mesure, au format JSON commun du projet. Les réponses sont nettoyées par le postprocess
+commun, puis écrites dans outputs/<nom_fichier>_<id>/concepts_<id>.json, comme pour la partie bdd.
+
+Le fichier de questions a le format de items.json :
+    {"PHQ-9": {"response_type": "...", "scale": "...",
+               "items": [{"item_id": "phq1", "question": "..."}, ...]}, ...}
+
+Lancement, depuis la racine du projet, avec Ollama ouvert :
+    python -m src.questions.extraction_questions "data/questionnaire/items.json"
+"""
+
+import argparse
 import hashlib
 import json
-import time
 from pathlib import Path
- 
+
 import ollama
- 
+
 from src.postprocess import postprocess
 from src.utils import load_json_file, load_txt_file, write_json_file
- 
-MODEL = "qwen2.5:7b-instruct"
+
+MODEL = "qwen2.5:7b"  # le même modèle que les autres parties
 OPTIONS = {
     "temperature": 0,    # sortie stable et reproductible
-    "num_predict": 400,  
+    "num_predict": 400,  # longueur maximum de la réponse
 }
-KEEP_ALIVE = "30m"     
- 
-HERE = Path(__file__).resolve().parent         
-ROOT = HERE.parents[1]                          
-PROMPT_FILE = ROOT / "configs" / "systems_prompt" / "system_prompt.txt"
-ITEMS_FILE = HERE / "items.json"
-OUT_DIR = ROOT / "res" / "questions"
-OUT_JSON = OUT_DIR / "concepts_questions.json"
-OUT_CSV = OUT_DIR / "concepts_questions.csv"
-CACHE_FILE = OUT_DIR / "raw_outputs_cache.json" 
- 
-CSV_FIELDS = ["item_id", "concept_proposed", "category", "relation", "evidence", "synonyms"]
- 
- 
-def load_items() -> list[dict]:
-    """Aplatit items.json en une liste d'items (le questionnaire et l'échelle sont
-    repris du bloc du questionnaire)."""
-    data = load_json_file(str(ITEMS_FILE))
+KEEP_ALIVE = "30m"  # Qwen reste chargé en mémoire 30 min entre deux appels
+
+PROMPT_FILE = Path("configs/systems_prompt/system_prompt.txt")  # prompt système commun
+OUT_DIR = Path("outputs")  # dossier des résultats (jamais versionné)
+
+
+def load_items(items_path: str | Path) -> list[dict]:
+    """Lit un fichier de questions (format items.json) et renvoie la liste à plat des questions.
+
+    Chaque question reçoit le nom de son questionnaire, son type de réponse et son échelle.
+    """
+    data = load_json_file(str(items_path))
     items = []
     for questionnaire, block in data.items():
         for it in block["items"]:
@@ -43,9 +50,10 @@ def load_items() -> list[dict]:
                 "scale": block["scale"],
             })
     return items
- 
- 
+
+
 def build_user_prompt(item: dict) -> str:
+    """Écrit le message envoyé à Qwen pour une question."""
     return (
         f"Questionnaire: {item['questionnaire']}\n"
         f"Item ID: {item['item_id']}\n"
@@ -53,10 +61,10 @@ def build_user_prompt(item: dict) -> str:
         f"Response type: {item['response_type']}\n"
         f"Response scale: {item['scale']}"
     )
- 
- 
+
+
 def ask_qwen(system_prompt: str, item: dict, user_prompt: str):
-    """Un appel à Qwen pour un item. Renvoie le JSON du modèle (dict) ou None."""
+    """Un appel à Qwen pour une question. Renvoie le JSON du modèle (dict) ou None."""
     response = ollama.chat(
         model=MODEL,
         messages=[
@@ -75,96 +83,85 @@ def ask_qwen(system_prompt: str, item: dict, user_prompt: str):
         return None
     data["item_id"] = item["item_id"]
     return data
- 
- 
+
+
 def make_signature(system_prompt: str) -> str:
-    """Empreinte du prompt, du modèle et des options : si l'un change, le cache est ignoré."""
+    """Empreinte du prompt, du modèle et des options : elle change si l'un des trois change."""
     text = system_prompt + MODEL + json.dumps(OPTIONS, sort_keys=True)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
- 
- 
-def load_cache(signature: str) -> dict:
-    if CACHE_FILE.exists():
-        try:
-            data = load_json_file(str(CACHE_FILE))
-        except json.JSONDecodeError:
-            return {}
-        if data.get("signature") == signature:
-            return data.get("items", {})
-        print("Cache ignoré : le prompt, le modèle ou les options ont changé.")
-    return {}
- 
- 
-def save_cache(signature: str, items: dict) -> None:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    write_json_file(str(CACHE_FILE), {"signature": signature, "items": items})
- 
- 
-def format_relation(relation) -> str:
-    if not relation or not isinstance(relation, dict):
-        return ""
-    return f"{relation.get('predicate', '')} -> {relation.get('target_concept', '')}"
- 
- 
-def main() -> None:
+
+
+def run_questions(items_path: str | Path) -> Path:
+    """Extraction d'un questionnaire : du fichier de questions au fichier JSON commun.
+
+    Appelable par un autre programme (comme src/main.py) ou par la commande de ce fichier.
+
+    Paramètre :
+        items_path : le fichier de questions, ex. "data/questionnaire/items.json".
+
+    Renvoie :
+        le chemin du fichier JSON commun écrit, ex. outputs/items_<id>/concepts_<id>.json
+        (c'est l'entrée de la vérification).
+
+    Lève :
+        FileNotFoundError : si le fichier n'existe pas.
+    """
+    items_path = Path(items_path)
+    if not items_path.is_file():
+        raise FileNotFoundError(f"Fichier introuvable : {items_path}")
+
     system_prompt = load_txt_file(str(PROMPT_FILE))
-    items = load_items()
- 
-    signature = make_signature(system_prompt)
-    cache = load_cache(signature)
-    start = time.time()
- 
+    items = load_items(items_path)
+    print(f"-> {len(items)} questions lues dans '{items_path}'")
+
+    # Un concept proposé par Qwen pour chaque question
     raw_outputs = []
-    for i, item in enumerate(items, 1):
-        iid = item["item_id"]
-        user_prompt = build_user_prompt(item)
-        entry = cache.get(iid)
-        if entry and entry.get("user_prompt") == user_prompt:
-            raw = entry["raw"]
-            print(f"[{i}/{len(items)}] {iid} : repris du cache (aucun appel à Qwen)")
-        else:
-            t0 = time.time()
-            raw = ask_qwen(system_prompt, item, user_prompt)
-            print(f"[{i}/{len(items)}] {iid} : {time.time() - t0:.0f} s")
-            if raw is None:
-                print(f"  ATTENTION {iid} : sortie JSON invalide du modèle")
-            else:
-                cache[iid] = {"user_prompt": user_prompt, "raw": raw}
-                save_cache(signature, cache)  # sauvegarde après chaque item
+    for item in items:
+        print(f"-> Qwen : {item['item_id']}...")
+        raw = ask_qwen(system_prompt, item, build_user_prompt(item))
+        if raw is None:
+            print("   ATTENTION : la réponse n'est pas un JSON valide")
         raw_outputs.append(raw)
- 
-    cleaned = postprocess([[raw] for raw in raw_outputs])
- 
-    results, missing = [], []
-    for item, concepts in zip(items, cleaned):
-        if not concepts:
-            missing.append(item["item_id"])
-            print(f"  ATTENTION {item['item_id']} : aucun concept conservé par postprocess")
-        results.extend(c.to_dict() for c in concepts)
- 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    write_json_file(str(OUT_JSON), results)
- 
-    with open(OUT_CSV, "w", newline="", encoding="utf-8-sig") as f:
-        writer = csv.DictWriter(f, fieldnames=CSV_FIELDS)
-        writer.writeheader()
-        for r in results:
-            writer.writerow({
-                "item_id": r["item_id"],
-                "concept_proposed": r["concept_proposed"],
-                "category": r["category"],
-                "relation": format_relation(r["relation"]),
-                "evidence": r["evidence"],
-                "synonyms": "; ".join(r["synonyms"]),
-            })
- 
-    print(f"\nTerminé en {(time.time() - start) / 60:.1f} min : "
-          f"{len(items)} items, {len(results)} concept(s) écrits.")
-    if missing:
-        print(f"Items sans concept conservé : {', '.join(missing)}")
-    print(f"JSON : {OUT_JSON}\nCSV  : {OUT_CSV}")
- 
- 
+
+    # Nettoyage commun : chaque question forme son propre groupe (pas de doublons entre questions)
+    groups = []
+    for raw in raw_outputs:
+        groups.append([raw])
+    cleaned = postprocess(groups)
+
+    concepts = []
+    for item, item_concepts in zip(items, cleaned):
+        if not item_concepts:
+            print(f"   ATTENTION {item['item_id']} : aucun concept gardé par le postprocess")
+        for concept in item_concepts:
+            concepts.append(concept.to_dict())
+    print(f"-> Postprocess : {len(concepts)} concepts gardés sur {len(items)} questions")
+
+    # Dossier : nom du fichier + empreinte de son contenu ; fichier : empreinte du prompt
+    file_id = hashlib.sha1(items_path.read_bytes()).hexdigest()[:8]
+    prompt_id = make_signature(system_prompt)[:8]
+    out_dir = OUT_DIR / f"{items_path.stem.replace(' ', '_')}_{file_id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    concepts_path = out_dir / f"concepts_{prompt_id}.json"
+
+    # Format JSON commun, comme la partie bdd : {"<source>": [concept, ...]}
+    write_json_file(str(concepts_path), {str(items_path): concepts})
+    print(f"-> {len(concepts)} concepts au format commun dans '{concepts_path}'")
+
+    return concepts_path
+
+
+def main() -> None:
+    """Commande : lit le chemin du fichier de questions dans le terminal, puis lance run_questions."""
+    parser = argparse.ArgumentParser(description="Extraction d'un questionnaire -> JSON commun")
+    parser.add_argument("items", help="fichier de questions au format items.json")
+    args = parser.parse_args()
+
+    try:
+        run_questions(args.items)
+    except FileNotFoundError as error:
+        raise SystemExit(str(error))
+
+
 if __name__ == "__main__":
     main()
- 
