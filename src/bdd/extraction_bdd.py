@@ -19,6 +19,8 @@ Les résultats sont écrits dans outputs/<nom_base>_<id>/.
 """
 
 import argparse
+from pathlib import Path
+
 from src.bdd.extract_variables import (load_dataset, load_readme, extract_labels, dataset_id,
                                        extract_variables, save_variables)
 from src.bdd.extract_concepts import extract_concepts, save_concepts
@@ -31,22 +33,31 @@ from src.utils import make_json_from_concepts
 SIMILARITY_THRESHOLD = 1.0
 
 
-def main():
-    """Lit le chemin de la base passé en argument, puis exécute les étapes du pipeline."""
-    # Argument : chemin de la base à traiter
-    parser = argparse.ArgumentParser(description="Pipeline : base de données structurée -> ontologie")
-    parser.add_argument("dataset", help="chemin du fichier de la base (CSV ou Excel)")
-    parser.add_argument("--label-row", action="store_true",
-                        help="la ligne 2 du fichier contient les libellés des variables")
-    args = parser.parse_args()
+def run_bdd(dataset_path: str | Path, label_row: bool = False) -> Path:
+    """Extraction d'une base de données : du fichier CSV ou Excel au fichier JSON commun.
+
+    Appelable par un autre programme (comme src/main.py) ou par la commande de ce fichier.
+
+    Paramètres :
+        dataset_path : le fichier de la base, ex. "data/bdd/ma_base.csv".
+        label_row    : True si la ligne 2 du fichier contient les libellés des variables.
+
+    Renvoie :
+        le chemin du fichier JSON commun écrit, ex. outputs/<nom_base>_<id>/concepts_<id>.json
+        (c'est l'entrée de la vérification).
+
+    Lève :
+        FileNotFoundError : si le fichier n'existe pas.
+    """
+    dataset_path = str(dataset_path)  # texte, comme le chemin tapé dans le terminal (clé du JSON commun)
 
     # Étape 1 : extraction des variables
-    print(f"-> Chargement de la base '{args.dataset}'...")
-    df = load_dataset(args.dataset)
+    print(f"-> Chargement de la base '{dataset_path}'...")
+    df = load_dataset(dataset_path)
 
-    # Ligne de libellés (option --label-row) : retirée des données
+    # Ligne de libellés (label_row) : retirée des données
     labels = None
-    if args.label_row:
+    if label_row:
         df, labels = extract_labels(df)
         print(f"-> {len(labels)} libellés lus sur la ligne 2")
 
@@ -55,11 +66,11 @@ def main():
 
     variables = extract_variables(df, labels)
     # Documentation de la base (feuille README d'un Excel), recopiée dans le JSON
-    readme = load_readme(args.dataset)
+    readme = load_readme(dataset_path)
     if readme is not None:
         print(f"-> README trouvé : {len(readme)} lignes de documentation")
 
-    out_path = save_variables(variables, args.dataset, ds_id, readme)
+    out_path = save_variables(variables, dataset_path, ds_id, readme)
     print(f"-> Étape 1 : {len(variables)} variables extraites dans '{out_path}'")
 
     # Étape 2 : un concept proposé par Qwen pour chaque variable
@@ -74,8 +85,21 @@ def main():
     print(f"-> Postprocess : {len(clean_concepts)} concepts gardés sur {len(concepts)}")
 
     clean_dicts = make_json_from_concepts(clean_concepts)
-    concepts_path = save_concepts(clean_dicts, out_path.parent, args.dataset)
+    concepts_path = save_concepts(clean_dicts, out_path.parent, dataset_path)
     print(f"-> Étape 2 : {len(clean_dicts)} concepts au format commun dans '{concepts_path}'")
+
+    return concepts_path
+
+
+def main() -> None:
+    """Commande : lit le chemin de la base (et l'option --label-row) dans le terminal, puis lance run_bdd."""
+    parser = argparse.ArgumentParser(description="Extraction d'une base de données structurée -> JSON commun")
+    parser.add_argument("dataset", help="chemin du fichier de la base (CSV ou Excel)")
+    parser.add_argument("--label-row", action="store_true",
+                        help="la ligne 2 du fichier contient les libellés des variables")
+    args = parser.parse_args()
+
+    run_bdd(args.dataset, args.label_row)
 
 
 if __name__ == "__main__":
