@@ -5,7 +5,6 @@ from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
-import torch
 from datasets import load_dataset
 from gliner import GLiNER
 from torch.utils.data import DataLoader, Dataset, IterableDataset
@@ -236,12 +235,14 @@ def encode_document(
     system_prompt: str,
     user_template: str,
     max_length: int,
-) -> dict[str, torch.Tensor]:
-    """Texte -> tenseurs 1D (seq_len,) ; le DataLoader ajoute la dimension batch."""
+) -> dict[str, str]:
+    """Prépare un document pour l'extraction : le texte, coupé pour que le prompt tienne dans max_length.
+
+    Le texte reste du texte (et non des tenseurs) : il est envoyé à Qwen via Ollama, comme dans les
+    autres parties. Le tokenizer ne sert qu'à compter les tokens pour couper le texte.
+    """
     text = truncate_text_to_budget(tokenizer, text, system_prompt, user_template, max_length)
-    prompt = build_prompt(tokenizer, system_prompt, user_template, text)
-    encoded = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)
-    return {key: value.squeeze(0) for key, value in encoded.items()}
+    return {"text": text}
 
 
 # --------------------------------------------------------------------------- #
@@ -267,7 +268,7 @@ class SpanExtractionDataset(Dataset):
     def __len__(self) -> int:
         return len(self.documents)
 
-    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
+    def __getitem__(self, index: int) -> dict[str, str]:
         return encode_document(
             self.tokenizer,
             self.documents[index].text,
@@ -301,7 +302,7 @@ class SpanExtractionDatasetHuggingFace(IterableDataset):
         self.text_filter = text_filter
         self.max_length = max_length
 
-    def __iter__(self) -> Iterator[dict[str, torch.Tensor]]:
+    def __iter__(self) -> Iterator[dict[str, str]]:
         for row in self.stream:
             text = clean_text(row[self.column_name])
             if self.text_filter is not None and not self.text_filter(text):
@@ -343,8 +344,12 @@ def preprocess(
     """
     text_filter = None if not_filtering else load_text_filter(gliner_model_path, stopwords)
 
-    def collate_fn(batch: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
-        return tokenizer.pad(batch, return_tensors="pt")
+    # Un paquet (batch) de documents devient une simple liste de textes
+    def collate_fn(batch: list[dict[str, str]]) -> list[str]:
+        texts = []
+        for item in batch:
+            texts.append(item["text"])
+        return texts
 
     dataloaders: list[DataLoader] = []
     sources: list[str] = []

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import logging
+from pathlib import Path
 from tqdm import tqdm
 
 from src.postprocess import postprocess
@@ -58,9 +60,9 @@ def main(
         print("Corpus None: no document passed the filter.")
         return
 
-    
+    # 3. Extraction : chaque document est envoyé à Qwen via Ollama (même modèle que les autres parties)
     raw_outputs = spanextraction(
-        model_configs_path, dataloaders, tokenizer, max_new_tokens=max_new_tokens
+        dataloaders, system_prompt, user_template, max_new_tokens=max_new_tokens
     )
 
     clean_concepts = postprocess(raw_outputs, similarity_threshold)
@@ -86,6 +88,44 @@ def main(
         logger.info("Results written to %s", res_path)
     else:
         print(results)
+
+
+def run_text(text_path: str | Path) -> Path | None:
+    """Extraction d'un texte (PDF ou TXT) : du fichier au fichier JSON commun.
+
+    Appelable par un autre programme (comme src/main.py). Lance main() ci-dessus sur un seul
+    fichier, avec le même seuil de doublons que la commande (0.99), et range le résultat dans
+    outputs/<nom_fichier>_<id>/concepts_<id>.json, comme les autres parties.
+
+    Paramètre :
+        text_path : le fichier texte, ex. "data/texte/note.pdf".
+
+    Renvoie :
+        le chemin du fichier JSON commun écrit (c'est l'entrée de la vérification),
+        ou None si aucun concept n'a été extrait (main() n'écrit alors aucun fichier).
+
+    Lève :
+        FileNotFoundError : si le fichier n'existe pas.
+    """
+    text_path = Path(text_path)
+    if not text_path.is_file():
+        raise FileNotFoundError(f"Fichier introuvable : {text_path}")
+
+    # Dossier : nom du fichier + empreinte de son contenu ; fichier : empreinte des prompts
+    file_id = hashlib.sha1(text_path.read_bytes()).hexdigest()[:8]
+    prompts = Path("configs/systems_prompt/system_prompt.txt").read_text(encoding="utf-8")
+    prompts = prompts + Path("configs/systems_prompt/user_template.txt").read_text(encoding="utf-8")
+    prompt_id = hashlib.sha1(prompts.encode("utf-8")).hexdigest()[:8]
+    out_dir = Path("outputs") / f"{text_path.stem.replace(' ', '_')}_{file_id}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    concepts_path = out_dir / f"concepts_{prompt_id}.json"
+
+    main(txt_file_path=str(text_path), res_path=str(concepts_path), similarity_threshold=0.99)
+
+    if not concepts_path.is_file():
+        return None
+    return concepts_path
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

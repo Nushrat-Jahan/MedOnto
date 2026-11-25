@@ -3,7 +3,7 @@
 Les données sont rangées par type, un dossier par type :
   data/bdd/            bases de données (CSV, Excel)   → extraction src/bdd/
   data/questionnaire/  questionnaires (.json)          → extraction src/questions/
-  data/texte/          textes cliniques                → pas encore branché
+  data/texte/          textes cliniques (.pdf, .txt)   → extraction src/text/
 Pour chaque fichier : extraction de son type → JSON commun → vérification commune (SNOMED CT).
 Les résultats sont écrits dans outputs/ (jamais versionné).
 
@@ -25,6 +25,7 @@ DATA_DIR = Path("data")                            # dossier des données (chemi
 DATA_TYPES = ["bdd", "questionnaire", "texte"]     # un sous-dossier de data/ par type de données
 BDD_EXTENSIONS = [".csv", ".xlsx", ".xlsm"]        # fichiers lus comme des bases de données
 QUESTIONNAIRE_EXTENSIONS = [".json"]               # fichiers de questions au format items.json
+TEXT_EXTENSIONS = [".pdf", ".txt"]                 # textes cliniques
 
 
 def detect_type(file_path: str | Path) -> str | None:
@@ -73,6 +74,17 @@ def process_file(file_path: str | Path, data_type: str) -> dict | None:
             print(f"-> Ignoré (format non lu, seulement un fichier de questions .json) : {file_path}")
             return None
         concepts_path = run_questions(file_path)
+    elif data_type == "texte":
+        if Path(file_path).suffix.lower() not in TEXT_EXTENSIONS:
+            print(f"-> Ignoré (pas un PDF ni un TXT) : {file_path}")
+            return None
+        # Importé seulement ici : la partie texte demande des bibliothèques en plus (datasets,
+        # gliner). Si elles manquent, seuls les textes échouent, pas les bases ni les questionnaires.
+        from src.text.extraction_text import run_text
+        concepts_path = run_text(file_path)
+        if concepts_path is None:
+            print(f"-> Aucun concept extrait du texte : {file_path}")
+            return None
     else:
         print(f"-> Type '{data_type}' pas encore branché, ignoré : {file_path}")
         return None

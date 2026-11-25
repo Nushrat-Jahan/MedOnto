@@ -14,7 +14,7 @@ src/text/
 ├── __init__.py        ← loads .env, silences noisy warnings (FutureWarning, hf_hub, tokenizer)
 ├── extraction_text.py ← entry point: main() + argparse CLI (orchestrates the 5 stages)
 ├── preprocess.py      ← text cleaning, GLiNER semantic filter, prompt building, DataLoaders
-└── spanextraction.py  ← batched LLM generation of the concept JSON
+└── spanextraction.py  ← LLM generation of the concept JSON (Qwen 2.5 7B via Ollama)
 ```
 
 All modules are imported from the **project root**, e.g.
@@ -34,7 +34,7 @@ preprocess()  ──►  clean_text()          → mojibake fix, NFC, hyphen rep
                  └─►  build_prompt()      → chat template with the {txt} placeholder
                  └─►  DataLoader[]        → one loader per local file, one for the HF stream
    │
-   │  2. spanextraction()  → model.generate() per batch, invalid JSON rejected
+   │  2. spanextraction()  → ollama.chat("qwen2.5:7b") per document, invalid JSON rejected
    ▼
 postprocess()  ──►  normalization, junk removal, exact dedup
                 └─►  Bio_ClinicalBERT embeddings → near-duplicate removal (cosine threshold)
@@ -51,8 +51,9 @@ in `myenv/`, which is git-ignored and therefore not part of the repository):
 
 | Package | Used for |
 |---|---|
-| `torch` | tensor ops, `DataLoader`, generation |
-| `transformers` | `AutoTokenizer`, `AutoModelForCausalLM` |
+| `torch` | `DataLoader` |
+| `transformers` | `AutoTokenizer` (token counting, to truncate long texts) |
+| `ollama` | generation with Qwen 2.5 7B, the same model as the other tracks (Ollama must be running) |
 | `gliner` | semantic filter (`knowledgator/gliner-qwen-0.5B-v1.0`) |
 | `datasets` | streaming a Hugging Face dataset |
 | `pypdf` | reading PDF documents |
@@ -63,7 +64,7 @@ in `myenv/`, which is git-ignored and therefore not part of the repository):
 The following models are downloaded from the Hugging Face Hub on first run, so **network access
 is required**:
 
-- the LLM of `configs/models/qwen2-5_config.toml` (default `Qwen/Qwen2.5-1.5B-Instruct`),
+- the tokenizer of `configs/models/qwen2-5_config.toml` (`Qwen/Qwen2.5-7B-Instruct`, tokenizer only),
 - the filter model of `configs/models/gliner-qwen-0.5B-v1.0.toml` (only when the filter is on),
 - `emilyalsentzer/Bio_ClinicalBERT`, loaded by `src/postprocess.py` for the similarity dedup.
 
@@ -74,7 +75,7 @@ code still runs, but the semantic-density filter and the stopword cleanup are de
 
 | File | Role |
 |---|---|
-| `configs/models/qwen2-5_config.toml` | LLM: `model_id` plus any `from_pretrained` kwarg (`dtype`, `device_map`, `attn_implementation`). `model_id` is popped, the remaining keys are forwarded to `AutoModelForCausalLM`. |
+| `configs/models/qwen2-5_config.toml` | `model_id` of the tokenizer used to count tokens and truncate long texts. Generation itself goes through Ollama (`qwen2.5:7b`), like the other tracks. |
 | `configs/models/gliner-qwen-0.5B-v1.0.toml` | Filter: `model_id`, `labels`, `threshold_score`, `threshold_density`. |
 | `configs/systems_prompt/system_prompt.txt` | System prompt. |
 | `configs/systems_prompt/user_template.txt` | User prompt. **Must contain the `{txt}` placeholder**, otherwise `load_tokenizer_and_prompts` raises a `ValueError`. |
@@ -228,8 +229,8 @@ by the document, and the messages are rendered with `tokenizer.apply_chat_templa
 
 ### 3. Generation — `spanextraction()`
 
-Loads the LLM from the TOML config, then generates for each batch with `do_sample=False`
-(greedy). Only the newly generated tokens are decoded. An answer whose JSON cannot be parsed
+Sends each document to Qwen 2.5 7B through Ollama (`qwen2.5:7b`, the same model and settings as
+the other tracks: `temperature=0`, JSON output). An answer whose JSON cannot be parsed
 into valid concepts is **rejected** and logged with its first 500 characters; the valid
 answers of the same source are kept.
 

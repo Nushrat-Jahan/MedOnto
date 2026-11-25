@@ -1,82 +1,75 @@
 import logging
-from typing import Any
 
-import torch
+import ollama
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from src.postprocess import _to_concepts
-from src.utils import load_toml_file
+from src.text.preprocess import PLACEHOLDER
 
 logger = logging.getLogger(__name__)
 
+# Le même modèle et les mêmes réglages que les autres parties (bdd, questionnaires, vérification),
+# pour que les résultats des trois parties soient comparables.
+MODEL = "qwen2.5:7b"  # Qwen 2.5 7B, en local via Ollama
+
 
 def spanextraction(
-    model_configs_path: str,
     dataloaders: list[DataLoader],
-    tokenizer: AutoTokenizer,
+    system_prompt: str,
+    user_template: str,
     max_new_tokens: int = 512,
 ) -> list[list[str]]:
-    """Génère, pour chaque item de chaque DataLoader, le JSON de concept clinique.
+    """Génère, pour chaque document de chaque DataLoader, le JSON de concept clinique.
+
+    Chaque document est envoyé à Qwen via Ollama (le logiciel Ollama doit être lancé), avec le
+    prompt système commun et le user_template, comme dans les autres parties : temperature=0
+    (même question -> même réponse) et réponse obligatoirement en JSON.
 
     Args:
-        model_configs_path: fichier TOML du LLM (doit contenir `model_id`).
-        dataloaders: DataLoaders construits par `preprocess`. Chaque batch est
-            un dict {"input_ids", "attention_mask"} de forme (batch, seq_len),
-            avec padding à gauche. Chaque ligne = un prompt avec UN item
-            (le champ item_id doit figurer dans le Context).
-        tokenizer: le même tokenizer que dans `preprocess`
-            (padding_side="left", pad_token défini).
-        max_new_tokens: le JSON de sortie est court, 256 suffit.
+        dataloaders: DataLoaders construits par `preprocess`. Chaque batch est une liste de
+            textes (un texte = un document, déjà coupé pour tenir dans le prompt).
+        system_prompt: le prompt système commun (configs/systems_prompt/system_prompt.txt).
+        user_template: le message propre à la partie texte, avec le repère {txt}.
+        max_new_tokens: longueur maximum de la réponse (le JSON de sortie est court).
 
     Returns:
         Une liste de réponses brutes (str) par DataLoader, dans le même ordre.
         À passer directement à `postprocess`.
     """
-    model_config: dict[str, Any] = load_toml_file(model_configs_path)
-    model_id = model_config.pop("model_id")
-
-    model = AutoModelForCausalLM.from_pretrained(model_id, **model_config)
-    model.eval()
-
     results: list[list[str]] = []
-    with torch.no_grad():
-        for i, loader in enumerate(dataloaders, start=1):
-            source_outputs: list[str] = []
-            doc_count = 0
-            n_invalid = 0
+    for i, loader in enumerate(dataloaders, start=1):
+        source_outputs: list[str] = []
+        doc_count = 0
+        n_invalid = 0
 
-            for batch in tqdm(loader, desc=f"Extracting concepts from source {i}"):
-                batch = {k: v.to(model.device) for k, v in batch.items()}
-                output = model.generate(
-                    **batch,
-                    max_new_tokens=max_new_tokens,
-                    do_sample=False,
-                    pad_token_id=tokenizer.pad_token_id,
-                    eos_token_id=tokenizer.eos_token_id,
+        for texts in tqdm(loader, desc=f"Extracting concepts from source {i}"):
+            for text in texts:
+                doc_count += 1
+                response = ollama.chat(
+                    model=MODEL,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_template.replace(PLACEHOLDER, text)},
+                    ],
+                    options={"temperature": 0, "num_predict": max_new_tokens},
+                    format="json",
                 )
+                answer = response["message"]["content"].strip()
 
-                input_length = batch["input_ids"].shape[1]
-                for row in output:
-                    doc_count += 1
-                    answer = tokenizer.decode(
-                        row[input_length:], skip_special_tokens=True
-                    ).strip()
+                if not _to_concepts(answer):
+                    n_invalid += 1
+                    logger.warning(
+                        "Invalid concept JSON for source %d, document %d. Raw answer: %r",
+                        i, doc_count, answer[:500],
+                    )
+                    continue
 
-                    if not _to_concepts(answer):
-                        n_invalid += 1
-                        logger.warning(
-                            "Invalid concept JSON for source %d, document %d. Raw answer: %r",
-                            i, doc_count, answer[:500],
-                        )
-                        continue
+                source_outputs.append(answer)
 
-                    source_outputs.append(answer)
-
-            logger.info(
-                "Source %d: %d/%d valid outputs (%d rejected)",
-                i, len(source_outputs), doc_count, n_invalid,
-            )
-            results.append(source_outputs)
+        logger.info(
+            "Source %d: %d/%d valid outputs (%d rejected)",
+            i, len(source_outputs), doc_count, n_invalid,
+        )
+        results.append(source_outputs)
     return results

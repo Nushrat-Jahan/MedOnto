@@ -1,4 +1,3 @@
-model_id = "Qwen/Qwen2.5-1.5B-Instruct"
-dtype = "bfloat16"
-device_map = "auto"
-attn_implementation = "sdpa"
+# Partie texte : seul le tokenizer de ce modèle est chargé, pour compter les tokens et couper les
+# textes trop longs. La génération des concepts passe par Ollama (qwen2.5:7b), comme les autres parties.
+model_id = "Qwen/Qwen2.5-7B-Instruct"
