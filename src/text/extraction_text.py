@@ -113,18 +113,54 @@ def run_text(text_path: str | Path) -> Path | None:
 
     # Dossier : nom du fichier + empreinte de son contenu ; fichier : empreinte des prompts
     file_id = hashlib.sha1(text_path.read_bytes()).hexdigest()[:8]
-    prompts = Path("configs/systems_prompt/system_prompt.txt").read_text(encoding="utf-8")
-    prompts = prompts + Path("configs/systems_prompt/user_template.txt").read_text(encoding="utf-8")
-    prompt_id = hashlib.sha1(prompts.encode("utf-8")).hexdigest()[:8]
     out_dir = Path("outputs") / f"{text_path.stem.replace(' ', '_')}_{file_id}"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    concepts_path = out_dir / f"concepts_{prompt_id}.json"
+    concepts_path = out_dir / f"concepts_{prompts_id()}.json"
 
     main(txt_file_path=str(text_path), res_path=str(concepts_path), similarity_threshold=0.99)
 
     if not concepts_path.is_file():
         return None
     return concepts_path
+
+
+def run_text_hf(dataset_name: str, column_name: str, max_documents: int) -> Path | None:
+    """Extraction d'un dataset Hugging Face de textes : les max_documents premiers textes → JSON commun.
+
+    Les textes sont lus en direct sur Hugging Face (streaming), sans télécharger le dataset.
+    Appelable par un autre programme (comme src/main.py). Lance main() ci-dessus, avec le même
+    seuil de doublons que la commande (0.99), et range le résultat dans outputs/, comme les autres parties.
+
+    Paramètres :
+        dataset_name  : le nom du dataset sur Hugging Face, ex. "aisc-team-a1/augmented-clinical-notes".
+        column_name   : la colonne qui contient le texte, ex. "full_note".
+        max_documents : le nombre de textes lus (chaque texte demande un appel à Qwen).
+
+    Renvoie :
+        le chemin du fichier JSON commun écrit (c'est l'entrée de la vérification),
+        ou None si aucun concept n'a été extrait.
+    """
+    # Dossier : nom du dataset, colonne et nombre de textes ; fichier : empreinte des prompts
+    folder = dataset_name.replace("/", "_") + f"_{column_name}_{max_documents}docs"
+    concepts_path = Path("outputs") / folder / f"concepts_{prompts_id()}.json"
+
+    main(
+        hugging_face_dataset=dataset_name,
+        column_name=column_name,
+        max_documents=max_documents,
+        res_path=str(concepts_path),
+        similarity_threshold=0.99,
+    )
+
+    if not concepts_path.is_file():
+        return None
+    return concepts_path
+
+
+def prompts_id() -> str:
+    """Empreinte courte du prompt système et du user_template : elle change si l'un des deux change."""
+    prompts = Path("configs/systems_prompt/system_prompt.txt").read_text(encoding="utf-8")
+    prompts = prompts + Path("configs/systems_prompt/user_template.txt").read_text(encoding="utf-8")
+    return hashlib.sha1(prompts.encode("utf-8")).hexdigest()[:8]
 
 
 if __name__ == "__main__":
