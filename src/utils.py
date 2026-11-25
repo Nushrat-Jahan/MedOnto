@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import tomllib
+from pathlib import Path
 from typing import Any, Protocol
 
 from pypdf import PdfReader
@@ -53,6 +54,7 @@ def load_json_file(json_path: str):
 
 def write_json_file(json_path: str, data) -> None:
     """Écrit des données dans un fichier JSON lisible (indenté, accents conservés)."""
+    Path(json_path).parent.mkdir(parents=True, exist_ok=True)  # crée le dossier s'il manque
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
