@@ -22,41 +22,46 @@ Common workflow:
 
 The project is organized in **two parts**: an **extraction** specific to each type of data, which
 always produces the same JSON (the common format), then a **verification** shared by all tracks.
+One command, `src/main.py`, runs the whole chain for every type of data.
 
 ```text
-extraction (one per track) → common JSON → shared verification (SNOMED CT)
+data/bdd/            → extraction (structured data)  ┐
+data/questionnaire/  → extraction (questionnaires)   ├→ common JSON → shared verification (SNOMED CT) → Excel file for the experts
+data/texte/          → extraction (texts)            ┘
 ```
+
+All tracks use the **same model**: Qwen 2.5 7B, run locally with Ollama (`qwen2.5:7b`, temperature 0).
 
 ```text
 MedOnto/
 ├── README.md                    ← project documentation (this file)
 ├── LICENSE
 ├── configs/
-│   ├── models/                  ← model settings (text track)
+│   ├── models/                  ← text track: tokenizer (to truncate long texts) and GLiNER filter
 │   ├── systems_prompt/          ← extraction prompts: shared system prompt, one user template per track
 │   └── verification_prompts/    ← prompts given to Qwen during the verification
 └── src/
-    ├── __init__.py
+    ├── main.py                  ← ENTRY POINT of the whole chain (all data, or one file)
     ├── postprocess.py           ← shared cleaning of the model outputs (all tracks)
     ├── utils.py                 ← shared helper functions (file I/O, parsing)
     │
-    ├── bdd/                     ← EXTRACTION · structured cohort data
-    │   ├── extraction_bdd.py    ← entry point
+    ├── bdd/                     ← EXTRACTION · structured cohort data (CSV, Excel)
+    │   ├── extraction_bdd.py    ← run_bdd(): dataset → common JSON
     │   ├── extract_variables.py ← step 1: variables of the dataset
-    │   └── extract_concepts.py  ← step 2: concepts proposed by Qwen, in the common JSON format
-    ├── text/                    ← EXTRACTION · medical and mental-health text
-    │   ├── extraction_text.py   ← entry point
-    │   ├── preprocess.py
-    │   └── spanextraction.py
-    ├── questions/               ← EXTRACTION · questionnaire and assessment data
-    │   ├── extraction_questions.py
-    │   └── items.json
+    │   └── extract_concepts.py  ← step 2: concepts proposed by Qwen
+    ├── questions/               ← EXTRACTION · questionnaires
+    │   ├── extraction_questions.py ← run_questions(): questions file → common JSON
+    │   └── items.json           ← example questions file (PHQ-9, GAD-7, Epworth items)
+    ├── text/                    ← EXTRACTION · medical and mental-health texts
+    │   ├── extraction_text.py   ← run_text() (PDF/TXT file), run_text_hf() (Hugging Face dataset)
+    │   ├── preprocess.py        ← text cleaning, GLiNER semantic filter
+    │   └── spanextraction.py    ← concept generation with Qwen (Ollama)
     │
     └── verification/            ← SHARED VERIFICATION · common JSON → SNOMED CT
-        ├── verification.py      ← entry point
+        ├── verification.py      ← run_verification(): common JSON → verification files
         ├── snomed_api.py        ← questions to the BioPortal API (exact search, broad search, children)
         ├── llm_choice.py        ← questions to Qwen (choose a candidate, propose another name)
-        ├── snomed_check.py      ← verification steps
+        ├── snomed_check.py      ← verification steps and Excel file for the experts
         └── voir_api.py          ← small tool showing the raw answer of the API for a term
 ```
 
@@ -71,7 +76,7 @@ project root, for example `from src.utils import load_json_file`.
   format before verification: text normalization (lowercase, whitespace), removal of meaningless
   items, and removal of near-duplicate concepts.
 - **`utils.py`** gathers the shared helper functions: reading text, PDF, TOML and JSON files,
-  writing JSON files, parsing concept and triplet lists from raw model output.
+  writing JSON files.
 
 ### The shared verification (`src/verification/`)
 
@@ -81,35 +86,75 @@ For each concept of the common JSON, the verification stops as soon as one step 
 2. otherwise, its synonyms (exact search);
 3. otherwise, the API proposes candidates (broad search) and Qwen chooses the closest one, or
    proposes another name; the direct children of the chosen concept are then examined;
-4. otherwise, embedding similarity;
+4. embedding similarity: **not used** — measured on our data, the current model (Bio_ClinicalBERT)
+   does not separate correct concepts from wrong ones;
 5. otherwise, the concept becomes a candidate proposed to the experts.
 
 Qwen only chooses among real SNOMED CT concepts returned by the API: it cannot invent an identifier.
-Concepts found with Qwen are marked "to confirm" for the experts.
+Concepts found with Qwen are marked "to confirm" in the Excel file for the experts.
 
 The [`src/text/` README](src/text/README.md) documents the text-extraction pipeline in detail.
 
 ## How to run
 
-From the project root, with Python 3.11 and Ollama running (model `qwen2.5:7b`):
+### Requirements
+
+- Python 3.11, with the libraries used by the project (`pandas`, `openpyxl`, `ollama`, `torch`,
+  `transformers`, `pypdf`, `python-dotenv`, `tqdm`; for the text track: `datasets`, `gliner`).
+- **Ollama running**, with the model `qwen2.5:7b`.
+- A BioPortal API key in a `.env` file at the project root: `BIOPORTAL_API_KEY=<your key>`.
+
+### Organize the data
+
+Put each file in the folder of its type (the type is deduced from the folder):
 
 ```text
-# Extraction, structured data track: dataset → common JSON
-python -m src.bdd.extraction_bdd "data/<dataset>.csv"
-python -m src.bdd.extraction_bdd "data/<dataset>.xlsx" --label-row   (if row 2 contains the labels)
-→ outputs/<dataset>_<id>/concepts_<id>.json
-
-# Shared verification: common JSON → SNOMED CT concepts
-python -m src.verification.verification "outputs/<dataset>_<id>/concepts_<id>.json"
-→ outputs/<dataset>_<id>/concepts_<id>_verification.json   (full result, all concepts)
-→ outputs/<dataset>_<id>/concepts_<id>_experts.xlsx        (concepts to review: CONCEPTS and README sheets)
-
-# Raw answer of the BioPortal API for a term
-python src/verification/voir_api.py "white blood cell count"
+data/
+├── bdd/              CSV or Excel datasets (an Excel file with a README sheet has its labels in row 2)
+├── questionnaire/    questions files in the format of src/questions/items.json (.json)
+└── texte/            clinical texts (.pdf, .txt)
+                      + hf_datasets.txt: Hugging Face datasets of texts, one per line
 ```
 
-The verification needs a BioPortal API key in a `.env` file at the project root:
-`BIOPORTAL_API_KEY=<your key>`.
+`hf_datasets.txt` lists datasets read directly from Hugging Face (nothing is downloaded), one line
+per dataset: its name, then the column that contains the text. Lines starting with `#` are ignored.
+
+```text
+aisc-team-a1/augmented-clinical-notes full_note
+ShenLab/MentalChat16K input
+```
+
+### Run the whole chain
+
+From the project root:
+
+```text
+python -m src.main                                     # every file of data/
+python -m src.main "data/bdd/<dataset>.csv"            # one file (type deduced from its folder)
+python -m src.main "elsewhere/<dataset>.csv" --type bdd   # a file stored elsewhere
+python -m src.main --max-documents 3                   # texts read per Hugging Face dataset (default: 5)
+```
+
+For each file (or dataset), the chain writes in `outputs/<name>_<id>/`:
+
+```text
+concepts_<id>.json                ← extraction: concepts in the common JSON format
+concepts_<id>_verification.json   ← verification: full result, all concepts
+concepts_<id>_experts.xlsx        ← concepts to review by the experts (CONCEPTS and README sheets)
+```
+
+An error on one file does not stop the others; a summary is printed at the end. Each text requires
+a call to Qwen (from 30 seconds to 2 minutes on a computer without GPU): keep `--max-documents` small.
+
+### Run one step only
+
+```text
+python -m src.bdd.extraction_bdd "data/bdd/<dataset>.xlsx" --label-row      # structured data → common JSON
+python -m src.questions.extraction_questions "data/questionnaire/items.json"  # questionnaire → common JSON
+python -m src.text.extraction_text "data/texte/<text>.pdf" --res_path "outputs/<name>/concepts.json"
+python -m src.verification.verification "outputs/<name>_<id>/concepts_<id>.json"   # common JSON → SNOMED CT
+python src/verification/voir_api.py "white blood cell count"                # raw answer of the BioPortal API
+```
 
 ## Common technical setup
 
